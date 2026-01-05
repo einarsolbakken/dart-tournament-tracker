@@ -57,6 +57,17 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        dart: {
+          green: "hsl(var(--dart-green))",
+          red: "hsl(var(--dart-red))",
+          gold: "hsl(var(--dart-gold))",
+          cream: "hsl(var(--dart-cream))",
+          dark: "hsl(var(--dart-dark))",
+        },
+      },
+      fontFamily: {
+        display: ["'Bebas Neue'", "sans-serif"],
+        body: ["'Inter'", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
