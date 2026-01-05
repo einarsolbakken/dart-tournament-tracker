@@ -164,6 +164,7 @@ const TournamentView = () => {
         match={selectedMatch}
         players={players || []}
         tournamentId={id || ""}
+        gameMode={tournament?.game_mode || "501"}
         onClose={() => setSelectedMatch(null)}
       />
     </div>
