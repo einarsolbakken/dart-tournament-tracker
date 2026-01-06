@@ -17,39 +17,54 @@ export type Database = {
       matches: {
         Row: {
           created_at: string
+          group_name: string | null
           id: string
           match_number: number
           player1_id: string | null
           player1_score: number | null
+          player1_sets: number | null
           player2_id: string | null
           player2_score: number | null
+          player2_sets: number | null
           round: number
+          sets_to_win: number | null
+          stage: string
           status: string
           tournament_id: string
           winner_id: string | null
         }
         Insert: {
           created_at?: string
+          group_name?: string | null
           id?: string
           match_number: number
           player1_id?: string | null
           player1_score?: number | null
+          player1_sets?: number | null
           player2_id?: string | null
           player2_score?: number | null
+          player2_sets?: number | null
           round: number
+          sets_to_win?: number | null
+          stage?: string
           status?: string
           tournament_id: string
           winner_id?: string | null
         }
         Update: {
           created_at?: string
+          group_name?: string | null
           id?: string
           match_number?: number
           player1_id?: string | null
           player1_score?: number | null
+          player1_sets?: number | null
           player2_id?: string | null
           player2_score?: number | null
+          player2_sets?: number | null
           round?: number
+          sets_to_win?: number | null
+          stage?: string
           status?: string
           tournament_id?: string
           winner_id?: string | null
@@ -88,21 +103,36 @@ export type Database = {
       players: {
         Row: {
           created_at: string
+          group_name: string | null
+          group_points: number | null
+          group_sets_lost: number | null
+          group_sets_won: number | null
           id: string
+          is_eliminated: boolean | null
           name: string
           seed: number | null
           tournament_id: string
         }
         Insert: {
           created_at?: string
+          group_name?: string | null
+          group_points?: number | null
+          group_sets_lost?: number | null
+          group_sets_won?: number | null
           id?: string
+          is_eliminated?: boolean | null
           name: string
           seed?: number | null
           tournament_id: string
         }
         Update: {
           created_at?: string
+          group_name?: string | null
+          group_points?: number | null
+          group_sets_lost?: number | null
+          group_sets_won?: number | null
           id?: string
+          is_eliminated?: boolean | null
           name?: string
           seed?: number | null
           tournament_id?: string
@@ -120,6 +150,7 @@ export type Database = {
       tournaments: {
         Row: {
           created_at: string
+          current_phase: string
           date: string
           game_mode: string
           id: string
@@ -128,14 +159,16 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_phase?: string
           date: string
-          game_mode: string
+          game_mode?: string
           id?: string
           name: string
           status?: string
         }
         Update: {
           created_at?: string
+          current_phase?: string
           date?: string
           game_mode?: string
           id?: string

@@ -4,38 +4,78 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Match, Player } from "@/hooks/useTournaments";
 import { MatchScoring } from "./MatchScoring";
+import { Match, Player, useUpdateGroupMatch, useUpdateKnockoutMatch } from "@/hooks/useTournaments";
+import { toast } from "sonner";
 
 interface ScoreDialogProps {
   match: Match | null;
   players: Player[];
   tournamentId: string;
-  gameMode: string;
   onClose: () => void;
 }
 
-export function ScoreDialog({ match, players, tournamentId, gameMode, onClose }: ScoreDialogProps) {
+export function ScoreDialog({
+  match,
+  players,
+  tournamentId,
+  onClose,
+}: ScoreDialogProps) {
+  const updateGroupMatch = useUpdateGroupMatch();
+  const updateKnockoutMatch = useUpdateKnockoutMatch();
+
   if (!match) return null;
 
   const player1 = players.find((p) => p.id === match.player1_id);
   const player2 = players.find((p) => p.id === match.player2_id);
+  const isGroupStage = match.stage === "group";
+
+  const handleComplete = async (
+    winnerId: string,
+    loserId: string,
+    player1Sets: number,
+    player2Sets: number
+  ) => {
+    try {
+      if (isGroupStage) {
+        await updateGroupMatch.mutateAsync({
+          matchId: match.id,
+          winnerId,
+          loserId,
+          player1Sets,
+          player2Sets,
+          tournamentId,
+        });
+      } else {
+        await updateKnockoutMatch.mutateAsync({
+          matchId: match.id,
+          winnerId,
+          player1Sets,
+          player2Sets,
+          tournamentId,
+        });
+      }
+      onClose();
+    } catch (error) {
+      toast.error("Kunne ikke oppdatere kamp");
+    }
+  };
 
   return (
     <Dialog open={!!match} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-xl text-center">
             {player1?.name} vs {player2?.name}
           </DialogTitle>
         </DialogHeader>
-
+        
         <MatchScoring
           match={match}
           players={players}
           tournamentId={tournamentId}
-          gameMode={gameMode}
-          onComplete={onClose}
+          stage={isGroupStage ? "group" : "knockout"}
+          onComplete={handleComplete}
         />
       </DialogContent>
     </Dialog>

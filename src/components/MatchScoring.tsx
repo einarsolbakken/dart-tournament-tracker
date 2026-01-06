@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react";
 import { DartBoard } from "./DartBoard";
 import { Button } from "@/components/ui/button";
-import { Match, Player, useUpdateMatch } from "@/hooks/useTournaments";
-import { Trophy, Undo2, Check, ArrowRight } from "lucide-react";
+import { Match, Player } from "@/hooks/useTournaments";
+import { Trophy, Undo2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -10,8 +10,8 @@ interface MatchScoringProps {
   match: Match;
   players: Player[];
   tournamentId: string;
-  gameMode: string;
-  onComplete: () => void;
+  stage: "group" | "knockout";
+  onComplete: (winnerId: string, loserId: string, player1Sets: number, player2Sets: number) => void;
 }
 
 interface ThrowRecord {
@@ -23,11 +23,12 @@ export function MatchScoring({
   match,
   players,
   tournamentId,
-  gameMode,
+  stage,
   onComplete,
 }: MatchScoringProps) {
-  const startingScore = gameMode === "501" ? 501 : 201;
-  const updateMatch = useUpdateMatch();
+  const startingScore = 301;
+  const setsToWin = stage === "group" ? 2 : 3; // First to 2 in group, first to 3 in knockout
+  const requireDoubleOut = stage === "knockout"; // Single checkout in group, double in knockout
   
   const player1 = players.find((p) => p.id === match.player1_id);
   const player2 = players.find((p) => p.id === match.player2_id);
@@ -37,12 +38,10 @@ export function MatchScoring({
   const [player2Score, setPlayer2Score] = useState(startingScore);
   const [player1Darts, setPlayer1Darts] = useState(0);
   const [player2Darts, setPlayer2Darts] = useState(0);
-  const [player1Legs, setPlayer1Legs] = useState(0);
-  const [player2Legs, setPlayer2Legs] = useState(0);
+  const [player1Sets, setPlayer1Sets] = useState(0);
+  const [player2Sets, setPlayer2Sets] = useState(0);
   const [currentThrows, setCurrentThrows] = useState<ThrowRecord[]>([]);
   const [roundScore, setRoundScore] = useState(0);
-
-  const legsToWin = 3; // Best of 5
 
   const currentPlayerScore = currentPlayer === 1 ? player1Score : player2Score;
   const currentPlayerName = currentPlayer === 1 ? player1?.name : player2?.name;
@@ -53,16 +52,18 @@ export function MatchScoring({
     const points = score * multiplier;
     const newScore = currentPlayerScore - points;
 
-    // Check for bust (going below 0 or to 1, or hitting 0 without double)
+    // Check for bust
     if (newScore < 0 || newScore === 1) {
       toast.error("Bust! For høy score");
       return;
     }
 
-    // Must finish on a double (or bullseye)
-    if (newScore === 0 && multiplier !== 2 && score !== 50) {
-      toast.error("Må avslutte på dobbel!");
-      return;
+    // Check checkout rules
+    if (newScore === 0) {
+      if (requireDoubleOut && multiplier !== 2 && score !== 50) {
+        toast.error("Må avslutte på dobbel!");
+        return;
+      }
     }
 
     const newThrow: ThrowRecord = { score, multiplier };
@@ -79,9 +80,9 @@ export function MatchScoring({
       setPlayer2Darts(player2Darts + 1);
     }
 
-    // Check for leg win
+    // Check for set win
     if (newScore === 0) {
-      handleLegWin();
+      handleSetWin();
       return;
     }
 
@@ -89,55 +90,51 @@ export function MatchScoring({
     if (newThrows.length >= 3) {
       setTimeout(() => switchPlayer(), 500);
     }
-  }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts]);
+  }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts, requireDoubleOut]);
 
-  const handleLegWin = () => {
+  const handleSetWin = () => {
     if (currentPlayer === 1) {
-      const newLegs = player1Legs + 1;
-      setPlayer1Legs(newLegs);
+      const newSets = player1Sets + 1;
+      setPlayer1Sets(newSets);
       
-      if (newLegs >= legsToWin) {
+      if (newSets >= setsToWin) {
         handleMatchWin(1);
         return;
       }
     } else {
-      const newLegs = player2Legs + 1;
-      setPlayer2Legs(newLegs);
+      const newSets = player2Sets + 1;
+      setPlayer2Sets(newSets);
       
-      if (newLegs >= legsToWin) {
+      if (newSets >= setsToWin) {
         handleMatchWin(2);
         return;
       }
     }
 
-    // Reset for next leg
-    toast.success(`${currentPlayerName} vinner legget!`);
-    resetLeg();
+    // Reset for next set
+    toast.success(`${currentPlayerName} vinner settet!`);
+    resetSet();
   };
 
-  const handleMatchWin = async (winner: 1 | 2) => {
+  const handleMatchWin = (winner: 1 | 2) => {
     const winnerId = winner === 1 ? match.player1_id : match.player2_id;
-    if (!winnerId) return;
+    const loserId = winner === 1 ? match.player2_id : match.player1_id;
+    
+    if (!winnerId || !loserId) return;
 
     toast.success(`🎯 ${winner === 1 ? player1?.name : player2?.name} vinner kampen!`);
 
-    await updateMatch.mutateAsync({
-      matchId: match.id,
-      winnerId,
-      player1Score: player1Legs + (winner === 1 ? 1 : 0),
-      player2Score: player2Legs + (winner === 2 ? 1 : 0),
-      tournamentId,
-    });
+    const finalP1Sets = player1Sets + (winner === 1 ? 1 : 0);
+    const finalP2Sets = player2Sets + (winner === 2 ? 1 : 0);
 
-    onComplete();
+    onComplete(winnerId, loserId, finalP1Sets, finalP2Sets);
   };
 
-  const resetLeg = () => {
+  const resetSet = () => {
     setPlayer1Score(startingScore);
     setPlayer2Score(startingScore);
     setCurrentThrows([]);
     setRoundScore(0);
-    // Winner of leg starts next
   };
 
   const switchPlayer = () => {
@@ -173,23 +170,32 @@ export function MatchScoring({
 
   return (
     <div className="space-y-6">
+      {/* Match info */}
+      <div className="text-center text-sm text-muted-foreground">
+        <span className="bg-muted px-3 py-1 rounded-full">
+          {stage === "group" ? "Gruppespill" : "Sluttspill"} • 301 • 
+          {requireDoubleOut ? " Dobbel checkout" : " Single checkout"} • 
+          First to {setsToWin}
+        </span>
+      </div>
+
       {/* Scoreboard */}
       <div className="grid grid-cols-2 gap-4">
         <PlayerScoreCard
           name={player1?.name || "Spiller 1"}
           score={player1Score}
-          legs={player1Legs}
+          sets={player1Sets}
           darts={player1Darts}
           isActive={currentPlayer === 1}
-          legsToWin={legsToWin}
+          setsToWin={setsToWin}
         />
         <PlayerScoreCard
           name={player2?.name || "Spiller 2"}
           score={player2Score}
-          legs={player2Legs}
+          sets={player2Sets}
           darts={player2Darts}
           isActive={currentPlayer === 2}
-          legsToWin={legsToWin}
+          setsToWin={setsToWin}
         />
       </div>
 
@@ -258,17 +264,17 @@ export function MatchScoring({
 function PlayerScoreCard({
   name,
   score,
-  legs,
+  sets,
   darts,
   isActive,
-  legsToWin,
+  setsToWin,
 }: {
   name: string;
   score: number;
-  legs: number;
+  sets: number;
   darts: number;
   isActive: boolean;
-  legsToWin: number;
+  setsToWin: number;
 }) {
   return (
     <div
@@ -289,7 +295,7 @@ function PlayerScoreCard({
       <div className="flex items-center justify-between mt-2 text-sm">
         <div className="flex items-center gap-1">
           <Trophy className="w-4 h-4 text-accent" />
-          <span>{legs}/{legsToWin}</span>
+          <span>{sets}/{setsToWin}</span>
         </div>
         <div className="text-muted-foreground">
           {darts} 🎯
