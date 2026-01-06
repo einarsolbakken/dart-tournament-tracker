@@ -1,6 +1,5 @@
 import { Match, Player } from "@/hooks/useTournaments";
 import { MatchCard } from "./MatchCard";
-import { getTotalRounds } from "@/lib/bracketGenerator";
 
 interface TournamentBracketProps {
   matches: Match[];
