@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { DartBoard } from "./DartBoard";
 import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
@@ -43,6 +43,7 @@ export function MatchScoring({
   const [currentThrows, setCurrentThrows] = useState<ThrowRecord[]>([]);
   const [roundScore, setRoundScore] = useState(0);
   const [throwHistory, setThrowHistory] = useState<{ throw: ThrowRecord; player: 1 | 2; prevScore: number; prevDarts: number; prevSets: number }[]>([]);
+  const [showBust, setShowBust] = useState(false);
 
   const currentPlayerScore = currentPlayer === 1 ? player1Score : player2Score;
   const currentPlayerName = currentPlayer === 1 ? player1?.name : player2?.name;
@@ -59,7 +60,10 @@ export function MatchScoring({
       (requireDoubleOut && newScore === 1);
 
     if (isBust) {
-      toast.error("Bust! Bytter spiller");
+      // Show big BUST overlay
+      setShowBust(true);
+      setTimeout(() => setShowBust(false), 1500);
+      
       // Reset score to before this round and switch player
       if (currentPlayer === 1) {
         setPlayer1Score(player1Score + roundScore);
@@ -214,9 +218,18 @@ export function MatchScoring({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {/* BUST Overlay */}
+      {showBust && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 animate-in fade-in duration-200">
+          <div className="text-7xl md:text-9xl font-display font-bold text-destructive animate-in zoom-in-50 duration-300">
+            BUST!
+          </div>
+        </div>
+      )}
+
       {/* Match info */}
-      <div className="text-center text-sm text-muted-foreground">
+      <div className="text-center text-sm text-muted-foreground mb-4">
         <span className="bg-muted px-3 py-1 rounded-full">
           {stage === "group" ? "Gruppespill" : "Sluttspill"} • 301 • 
           {requireDoubleOut ? " Dobbel checkout" : " Single checkout"} • 
@@ -224,83 +237,91 @@ export function MatchScoring({
         </span>
       </div>
 
-      {/* Scoreboard */}
-      <div className="grid grid-cols-2 gap-4">
-        <PlayerScoreCard
-          name={player1?.name || "Spiller 1"}
-          score={player1Score}
-          sets={player1Sets}
-          darts={player1Darts}
-          isActive={currentPlayer === 1}
-          setsToWin={setsToWin}
-        />
-        <PlayerScoreCard
-          name={player2?.name || "Spiller 2"}
-          score={player2Score}
-          sets={player2Sets}
-          darts={player2Darts}
-          isActive={currentPlayer === 2}
-          setsToWin={setsToWin}
-        />
-      </div>
+      {/* Side-by-side layout */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left side: Scores */}
+        <div className="lg:w-1/2 space-y-4">
+          {/* Scoreboard */}
+          <div className="grid grid-cols-2 gap-4">
+            <PlayerScoreCard
+              name={player1?.name || "Spiller 1"}
+              score={player1Score}
+              sets={player1Sets}
+              darts={player1Darts}
+              isActive={currentPlayer === 1}
+              setsToWin={setsToWin}
+            />
+            <PlayerScoreCard
+              name={player2?.name || "Spiller 2"}
+              score={player2Score}
+              sets={player2Sets}
+              darts={player2Darts}
+              isActive={currentPlayer === 2}
+              setsToWin={setsToWin}
+            />
+          </div>
 
-      {/* Current round */}
-      <div className="bg-muted rounded-lg p-4">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm text-muted-foreground">
-            {currentPlayerName}'s tur
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-lg text-accent">+{roundScore}</span>
-            <span className="text-muted-foreground">
-              ({3 - currentThrows.length} piler igjen)
-            </span>
+          {/* Current round */}
+          <div className="bg-muted rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-muted-foreground">
+                {currentPlayerName}'s tur
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xl text-accent">+{roundScore}</span>
+                <span className="text-muted-foreground">
+                  ({3 - currentThrows.length} piler igjen)
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 mb-4">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex-1 h-14 rounded-md flex items-center justify-center font-bold text-xl",
+                    currentThrows[i]
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background border border-border"
+                  )}
+                >
+                  {currentThrows[i] ? formatThrow(currentThrows[i]) : "-"}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="default"
+                onClick={undoLastThrow}
+                disabled={throwHistory.length === 0}
+              >
+                <Undo2 className="w-4 h-4 mr-1" />
+                Angre
+              </Button>
+              <Button
+                variant="outline"
+                size="default"
+                onClick={switchPlayer}
+                className="ml-auto"
+              >
+                Neste spiller
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2 mb-3">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className={cn(
-                "flex-1 h-12 rounded-md flex items-center justify-center font-bold text-lg",
-                currentThrows[i]
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background border border-border"
-              )}
-            >
-              {currentThrows[i] ? formatThrow(currentThrows[i]) : "-"}
-            </div>
-          ))}
-        </div>
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={undoLastThrow}
-            disabled={throwHistory.length === 0}
-          >
-            <Undo2 className="w-4 h-4 mr-1" />
-            Angre
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={switchPlayer}
-            className="ml-auto"
-          >
-            Neste spiller
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
+        {/* Right side: Dartboard */}
+        <div className="lg:w-1/2 flex items-center justify-center">
+          <DartBoard
+            onScore={handleScore}
+            disabled={currentThrows.length >= 3}
+          />
         </div>
       </div>
-
-      {/* Dartboard */}
-      <DartBoard
-        onScore={handleScore}
-        disabled={currentThrows.length >= 3}
-      />
     </div>
   );
 }
