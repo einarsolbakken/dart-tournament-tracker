@@ -42,6 +42,7 @@ export function MatchScoring({
   const [player2Sets, setPlayer2Sets] = useState(0);
   const [currentThrows, setCurrentThrows] = useState<ThrowRecord[]>([]);
   const [roundScore, setRoundScore] = useState(0);
+  const [throwHistory, setThrowHistory] = useState<{ throw: ThrowRecord; player: 1 | 2; prevScore: number; prevDarts: number; prevSets: number }[]>([]);
 
   const currentPlayerScore = currentPlayer === 1 ? player1Score : player2Score;
   const currentPlayerName = currentPlayer === 1 ? player1?.name : player2?.name;
@@ -83,6 +84,16 @@ export function MatchScoring({
     const newThrows = [...currentThrows, newThrow];
     setCurrentThrows(newThrows);
     setRoundScore(roundScore + points);
+
+    // Save to history for undo
+    const historyEntry = {
+      throw: newThrow,
+      player: currentPlayer,
+      prevScore: currentPlayer === 1 ? player1Score : player2Score,
+      prevDarts: currentPlayer === 1 ? player1Darts : player2Darts,
+      prevSets: currentPlayer === 1 ? player1Sets : player2Sets,
+    };
+    setThrowHistory([...throwHistory, historyEntry]);
 
     // Update score
     if (currentPlayer === 1) {
@@ -157,20 +168,41 @@ export function MatchScoring({
   };
 
   const undoLastThrow = () => {
-    if (currentThrows.length === 0) return;
+    if (throwHistory.length === 0) return;
 
-    const lastThrow = currentThrows[currentThrows.length - 1];
-    const points = lastThrow.score * lastThrow.multiplier;
+    const lastEntry = throwHistory[throwHistory.length - 1];
+    const points = lastEntry.throw.score * lastEntry.throw.multiplier;
 
-    setCurrentThrows(currentThrows.slice(0, -1));
-    setRoundScore(roundScore - points);
+    // Remove from history
+    setThrowHistory(throwHistory.slice(0, -1));
 
-    if (currentPlayer === 1) {
-      setPlayer1Score(player1Score + points);
-      setPlayer1Darts(Math.max(0, player1Darts - 1));
+    // Restore state for the player who made the throw
+    if (lastEntry.player === 1) {
+      setPlayer1Score(lastEntry.prevScore);
+      setPlayer1Darts(lastEntry.prevDarts);
+      setPlayer1Sets(lastEntry.prevSets);
     } else {
-      setPlayer2Score(player2Score + points);
-      setPlayer2Darts(Math.max(0, player2Darts - 1));
+      setPlayer2Score(lastEntry.prevScore);
+      setPlayer2Darts(lastEntry.prevDarts);
+      setPlayer2Sets(lastEntry.prevSets);
+    }
+
+    // If it was current player's throw, update current throws
+    if (lastEntry.player === currentPlayer) {
+      setCurrentThrows(currentThrows.slice(0, -1));
+      setRoundScore(Math.max(0, roundScore - points));
+    } else {
+      // Switch back to the player who made the throw
+      setCurrentPlayer(lastEntry.player);
+      // Reconstruct their throws from history
+      const playerThrows = throwHistory
+        .slice(0, -1)
+        .filter(h => h.player === lastEntry.player)
+        .slice(-2)
+        .map(h => h.throw);
+      setCurrentThrows(playerThrows);
+      const playerRoundScore = playerThrows.reduce((sum, t) => sum + t.score * t.multiplier, 0);
+      setRoundScore(playerRoundScore);
     }
   };
 
@@ -247,7 +279,7 @@ export function MatchScoring({
             variant="outline"
             size="sm"
             onClick={undoLastThrow}
-            disabled={currentThrows.length === 0}
+            disabled={throwHistory.length === 0}
           >
             <Undo2 className="w-4 h-4 mr-1" />
             Angre
