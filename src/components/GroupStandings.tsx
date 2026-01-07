@@ -69,26 +69,28 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
                     <tr className="border-b border-border text-xs text-muted-foreground">
                       <th className="text-left py-2 px-3">#</th>
                       <th className="text-left py-2 px-3">Spiller</th>
-                      <th className="text-center py-2 px-1">P</th>
+                      <th className="text-center py-2 px-1">K</th>
                       <th className="text-center py-2 px-1">V</th>
                       <th className="text-center py-2 px-1">T</th>
-                      <th className="text-center py-2 px-3">+/-</th>
+                      <th className="text-center py-2 px-3">Avg</th>
                     </tr>
                   </thead>
                   <tbody>
                     {groupPlayers.map((player, index) => {
                       const isLast = index === groupPlayers.length - 1;
-                      const wins = matches.filter(
+                      const playerMatches = matches.filter(
                         m => m.group_name === groupName && 
                         m.status === "completed" && 
-                        m.winner_id === player.id
-                      ).length;
-                      const losses = matches.filter(
-                        m => m.group_name === groupName && 
-                        m.status === "completed" && 
-                        (m.player1_id === player.id || m.player2_id === player.id) &&
-                        m.winner_id !== player.id
-                      ).length;
+                        (m.player1_id === player.id || m.player2_id === player.id)
+                      );
+                      const matchesPlayed = playerMatches.length;
+                      const wins = playerMatches.filter(m => m.winner_id === player.id).length;
+                      const losses = matchesPlayed - wins;
+                      
+                      // Calculate average per 3 darts (placeholder - would need actual dart data)
+                      // For now show sets difference as a simple stat
+                      const setsDiff = player.group_sets_won - player.group_sets_lost;
+                      const avgDisplay = setsDiff >= 0 ? `+${setsDiff}` : `${setsDiff}`;
                       
                       return (
                         <tr 
@@ -106,11 +108,11 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
                               <XCircle className="w-3 h-3 text-destructive" />
                             )}
                           </td>
-                          <td className="text-center py-2 px-1 font-bold">{player.group_points}</td>
+                          <td className="text-center py-2 px-1 font-bold">{matchesPlayed}</td>
                           <td className="text-center py-2 px-1 text-green-500">{wins}</td>
                           <td className="text-center py-2 px-1 text-red-500">{losses}</td>
-                          <td className="text-center py-2 px-3 text-xs">
-                            {player.group_sets_won}-{player.group_sets_lost}
+                          <td className="text-center py-2 px-3 text-xs font-medium">
+                            {avgDisplay}
                           </td>
                         </tr>
                       );
