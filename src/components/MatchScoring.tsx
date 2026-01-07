@@ -52,9 +52,22 @@ export function MatchScoring({
     const points = score * multiplier;
     const newScore = currentPlayerScore - points;
 
-    // Check for bust
-    if (newScore < 0 || newScore === 1) {
-      toast.error("Bust! For høy score");
+    // Check for bust - in single checkout mode, score of 0 is valid, in double checkout need to check
+    const isBust = newScore < 0 || 
+      (!requireDoubleOut && newScore < 0) || 
+      (requireDoubleOut && newScore === 1);
+
+    if (isBust) {
+      toast.error("Bust! Bytter spiller");
+      // Reset score to before this round and switch player
+      if (currentPlayer === 1) {
+        setPlayer1Score(player1Score + roundScore);
+        setPlayer1Darts(player1Darts - currentThrows.length);
+      } else {
+        setPlayer2Score(player2Score + roundScore);
+        setPlayer2Darts(player2Darts - currentThrows.length);
+      }
+      setTimeout(() => switchPlayer(), 300);
       return;
     }
 
@@ -90,7 +103,7 @@ export function MatchScoring({
     if (newThrows.length >= 3) {
       setTimeout(() => switchPlayer(), 500);
     }
-  }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts, requireDoubleOut]);
+  }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts, player1Score, player2Score, requireDoubleOut]);
 
   const handleSetWin = () => {
     if (currentPlayer === 1) {
@@ -243,7 +256,6 @@ export function MatchScoring({
             variant="outline"
             size="sm"
             onClick={switchPlayer}
-            disabled={currentThrows.length === 0}
             className="ml-auto"
           >
             Neste spiller
