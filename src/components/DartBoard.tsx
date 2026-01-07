@@ -108,7 +108,7 @@ export function DartBoard({ onScore, disabled }: DartBoardProps) {
 
   return (
     <div className="relative">
-      <svg viewBox="0 0 400 400" className="w-full max-w-[320px] mx-auto">
+      <svg viewBox="0 0 400 400" className="w-full max-w-[420px] mx-auto">
         {/* Outer ring background */}
         <circle cx="200" cy="200" r="180" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="1" />
         
