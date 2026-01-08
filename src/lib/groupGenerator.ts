@@ -98,6 +98,16 @@ export function generateGroupMatches(groups: GroupInfo[]): GroupMatch[] {
         });
       }
     }
+    
+    // If only 2 players in group, add a second match between them
+    if (players.length === 2) {
+      matches.push({
+        groupName: group.name,
+        matchNumber: matchNum++,
+        player1Id: players[1], // Swap order for variety
+        player2Id: players[0],
+      });
+    }
   }
   
   return matches;
