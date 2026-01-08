@@ -191,6 +191,10 @@ export function MatchScoring({
     setCurrentThrows([]);
     setRoundScore(0);
     
+    // Reset darts for new set
+    setPlayer1Darts(0);
+    setPlayer2Darts(0);
+    
     // Alternate starting player based on set number
     // Set 1: Player 1, Set 2: Player 2, Set 3: Player 1, etc.
     setCurrentPlayer(nextSetNumber % 2 === 1 ? 1 : 2);
@@ -311,12 +315,12 @@ export function MatchScoring({
         </div>
       )}
 
-      {/* Match info */}
+      {/* Kampinfo */}
       <div className="text-center text-sm text-muted-foreground mb-6">
         <span className="bg-muted px-4 py-2 rounded-full text-base">
           {stage === "group" ? "Gruppespill" : "Sluttspill"} • 301 • 
           {requireDoubleOut ? " Dobbel checkout" : " Single checkout"} • 
-          First to {setsToWin} • Set {setNumber}
+          Først til {setsToWin} • Set {setNumber}
         </span>
       </div>
 
