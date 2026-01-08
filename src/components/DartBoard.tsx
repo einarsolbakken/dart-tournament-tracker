@@ -107,7 +107,7 @@ export function DartBoard({ onScore, disabled }: DartBoardProps) {
   };
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
+    <div className="relative w-full h-full flex flex-col items-center justify-center">
       <svg viewBox="0 0 400 400" className="w-full max-w-[700px] xl:max-w-[800px] mx-auto">
         {/* Outer ring background */}
         <circle cx="200" cy="200" r="180" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="1" />
@@ -152,8 +152,8 @@ export function DartBoard({ onScore, disabled }: DartBoardProps) {
         />
       </svg>
 
-      {/* Quick score buttons */}
-      <div className="flex justify-center gap-2 mt-4 flex-wrap">
+      {/* Quick score buttons - under dartboard */}
+      <div className="flex justify-center gap-4 mt-6">
         <QuickButton onClick={() => onScore(0, 1)} disabled={disabled}>
           Miss
         </QuickButton>
@@ -182,7 +182,7 @@ function QuickButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+        "px-6 py-3 rounded-lg text-base font-semibold transition-colors",
         "bg-muted hover:bg-muted/80 text-foreground",
         disabled && "opacity-50 cursor-not-allowed"
       )}
