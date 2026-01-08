@@ -63,9 +63,9 @@ export function ScoreDialog({
 
   return (
     <Dialog open={!!match} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] xl:max-w-7xl max-h-[95vh] overflow-y-auto p-6 xl:p-8">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl text-center">
+          <DialogTitle className="font-display text-2xl text-center">
             {player1?.name} vs {player2?.name}
           </DialogTitle>
         </DialogHeader>
