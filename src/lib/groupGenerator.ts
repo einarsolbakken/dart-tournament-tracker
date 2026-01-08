@@ -19,8 +19,28 @@ export interface GroupInfo {
 export function generateGroups(players: PlayerForGroup[]): GroupInfo[] {
   const n = players.length;
   
-  // Calculate number of groups (max 4 per group, min 3)
-  const numGroups = Math.ceil(n / 4);
+  // If 8 or fewer players, no group stage needed - go straight to knockout
+  // This is handled at tournament creation level
+  
+  // For more than 8 players, we need exactly 8 to advance to quarterfinals
+  // Calculate optimal group structure
+  let numGroups: number;
+  let targetAdvancing = 8;
+  
+  if (n <= 8) {
+    // 8 or fewer - straight to knockout (should not reach here for group stage)
+    numGroups = Math.ceil(n / 4);
+  } else if (n <= 12) {
+    // 9-12 players: 4 groups, need to eliminate (n - 8) players
+    // With 4 groups of 3 each (12 players), eliminating 4 leaves 8
+    numGroups = 4;
+  } else if (n <= 16) {
+    // 13-16 players: 4 groups of 4, eliminate 2 per group = 8 advance
+    numGroups = 4;
+  } else {
+    // More than 16: still aim for 8 advancing
+    numGroups = Math.ceil(n / 4);
+  }
   
   // Initialize groups
   const groups: GroupInfo[] = [];
@@ -83,28 +103,19 @@ export function generateGroupMatches(groups: GroupInfo[]): GroupMatch[] {
   return matches;
 }
 
-export function calculateAdvancingPlayers(groups: GroupInfo[]): number {
-  // From each group, last place is eliminated
-  // So (group_size - 1) players advance from each group
-  let totalAdvancing = 0;
-  
-  for (const group of groups) {
-    totalAdvancing += group.playerIds.length - 1;
+export function calculateAdvancingPlayers(groups: GroupInfo[], totalPlayers: number): number {
+  // Always exactly 8 players advance to quarterfinals when > 8 players
+  if (totalPlayers > 8) {
+    return 8;
   }
   
-  return totalAdvancing;
+  // For 8 or fewer, all advance (no group stage really needed)
+  return totalPlayers;
 }
 
 export function willHaveEvenAdvancing(playerCount: number): boolean {
-  const testPlayers = Array.from({ length: playerCount }, (_, i) => ({
-    id: `test-${i}`,
-    name: `Player ${i}`,
-  }));
-  
-  const groups = generateGroups(testPlayers);
-  const advancing = calculateAdvancingPlayers(groups);
-  
-  return advancing % 2 === 0;
+  // Always true now since we always have 8 advancing (or fewer if < 8 players)
+  return true;
 }
 
 export function getMinPlayersForEvenAdvance(minPlayers: number): number {

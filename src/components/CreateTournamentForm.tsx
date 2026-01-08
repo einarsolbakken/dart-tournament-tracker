@@ -47,7 +47,7 @@ export function CreateTournamentForm() {
       .map((name, i) => ({ id: `test-${i}`, name }));
     
     const groups = generateGroups(testPlayers);
-    const advancing = calculateAdvancingPlayers(groups);
+    const advancing = calculateAdvancingPlayers(groups, validPlayerCount);
     const isEven = advancing % 2 === 0;
     
     return { groups, advancing, isEven };
