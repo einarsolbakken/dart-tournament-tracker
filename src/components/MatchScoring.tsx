@@ -2,9 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import { DartBoard } from "./DartBoard";
 import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
-import { Trophy, Undo2, ArrowRight } from "lucide-react";
+import { Trophy, Undo2, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 interface MatchScoringProps {
   match: Match;
@@ -17,6 +16,14 @@ interface MatchScoringProps {
 interface ThrowRecord {
   score: number;
   multiplier: number;
+}
+
+interface MatchResult {
+  winnerId: string;
+  loserId: string;
+  winnerName: string;
+  player1Sets: number;
+  player2Sets: number;
 }
 
 export function MatchScoring({
@@ -44,12 +51,15 @@ export function MatchScoring({
   const [roundScore, setRoundScore] = useState(0);
   const [throwHistory, setThrowHistory] = useState<{ throw: ThrowRecord; player: 1 | 2; prevScore: number; prevDarts: number; prevSets: number }[]>([]);
   const [showBust, setShowBust] = useState(false);
+  const [showSetWin, setShowSetWin] = useState<string | null>(null);
+  const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
+  const [setNumber, setSetNumber] = useState(1); // Track which set we're on for alternating starts
 
   const currentPlayerScore = currentPlayer === 1 ? player1Score : player2Score;
   const currentPlayerName = currentPlayer === 1 ? player1?.name : player2?.name;
 
   const handleScore = useCallback((score: number, multiplier: number) => {
-    if (currentThrows.length >= 3) return;
+    if (currentThrows.length >= 3 || matchResult) return;
 
     const points = score * multiplier;
     const newScore = currentPlayerScore - points;
@@ -60,9 +70,9 @@ export function MatchScoring({
       (requireDoubleOut && newScore === 1);
 
     if (isBust) {
-      // Show big BUST overlay
+      // Show big BUST overlay - longer duration
       setShowBust(true);
-      setTimeout(() => setShowBust(false), 1500);
+      setTimeout(() => setShowBust(false), 2500);
       
       // Reset score to before this round and switch player
       if (currentPlayer === 1) {
@@ -79,7 +89,9 @@ export function MatchScoring({
     // Check checkout rules
     if (newScore === 0) {
       if (requireDoubleOut && multiplier !== 2 && score !== 50) {
-        toast.error("Må avslutte på dobbel!");
+        // Show bust for invalid checkout
+        setShowBust(true);
+        setTimeout(() => setShowBust(false), 2500);
         return;
       }
     }
@@ -118,7 +130,7 @@ export function MatchScoring({
     if (newThrows.length >= 3) {
       setTimeout(() => switchPlayer(), 500);
     }
-  }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts, player1Score, player2Score, requireDoubleOut]);
+  }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts, player1Score, player2Score, requireDoubleOut, matchResult]);
 
   const handleSetWin = () => {
     if (currentPlayer === 1) {
@@ -126,43 +138,62 @@ export function MatchScoring({
       setPlayer1Sets(newSets);
       
       if (newSets >= setsToWin) {
-        handleMatchWin(1);
+        // Show match win overlay instead of auto-completing
+        setMatchResult({
+          winnerId: match.player1_id!,
+          loserId: match.player2_id!,
+          winnerName: player1?.name || "Spiller 1",
+          player1Sets: newSets,
+          player2Sets,
+        });
         return;
       }
+      
+      // Show set win overlay
+      setShowSetWin(`${player1?.name} vinner set ${setNumber}!`);
+      setTimeout(() => setShowSetWin(null), 2000);
     } else {
       const newSets = player2Sets + 1;
       setPlayer2Sets(newSets);
       
       if (newSets >= setsToWin) {
-        handleMatchWin(2);
+        // Show match win overlay instead of auto-completing
+        setMatchResult({
+          winnerId: match.player2_id!,
+          loserId: match.player1_id!,
+          winnerName: player2?.name || "Spiller 2",
+          player1Sets,
+          player2Sets: newSets,
+        });
         return;
       }
+      
+      // Show set win overlay
+      setShowSetWin(`${player2?.name} vinner set ${setNumber}!`);
+      setTimeout(() => setShowSetWin(null), 2000);
     }
 
-    // Reset for next set
-    toast.success(`${currentPlayerName} vinner settet!`);
+    // Reset for next set with alternating starting player
     resetSet();
   };
 
-  const handleMatchWin = (winner: 1 | 2) => {
-    const winnerId = winner === 1 ? match.player1_id : match.player2_id;
-    const loserId = winner === 1 ? match.player2_id : match.player1_id;
-    
-    if (!winnerId || !loserId) return;
-
-    toast.success(`🎯 ${winner === 1 ? player1?.name : player2?.name} vinner kampen!`);
-
-    const finalP1Sets = player1Sets + (winner === 1 ? 1 : 0);
-    const finalP2Sets = player2Sets + (winner === 2 ? 1 : 0);
-
-    onComplete(winnerId, loserId, finalP1Sets, finalP2Sets);
+  const confirmMatchResult = () => {
+    if (!matchResult) return;
+    onComplete(matchResult.winnerId, matchResult.loserId, matchResult.player1Sets, matchResult.player2Sets);
   };
 
   const resetSet = () => {
+    const nextSetNumber = setNumber + 1;
+    setSetNumber(nextSetNumber);
+    
     setPlayer1Score(startingScore);
     setPlayer2Score(startingScore);
     setCurrentThrows([]);
     setRoundScore(0);
+    
+    // Alternate starting player based on set number
+    // Set 1: Player 1, Set 2: Player 2, Set 3: Player 1, etc.
+    setCurrentPlayer(nextSetNumber % 2 === 1 ? 1 : 2);
   };
 
   const switchPlayer = () => {
@@ -174,8 +205,12 @@ export function MatchScoring({
   const undoLastThrow = () => {
     if (throwHistory.length === 0) return;
 
+    // If match was won, clear the result to allow undo
+    if (matchResult) {
+      setMatchResult(null);
+    }
+
     const lastEntry = throwHistory[throwHistory.length - 1];
-    const points = lastEntry.throw.score * lastEntry.throw.multiplier;
 
     // Remove from history
     setThrowHistory(throwHistory.slice(0, -1));
@@ -194,7 +229,7 @@ export function MatchScoring({
     // If it was current player's throw, update current throws
     if (lastEntry.player === currentPlayer) {
       setCurrentThrows(currentThrows.slice(0, -1));
-      setRoundScore(Math.max(0, roundScore - points));
+      setRoundScore(Math.max(0, roundScore - lastEntry.throw.score * lastEntry.throw.multiplier));
     } else {
       // Switch back to the player who made the throw
       setCurrentPlayer(lastEntry.player);
@@ -218,31 +253,79 @@ export function MatchScoring({
   };
 
   return (
-    <div className="relative">
+    <div className="relative min-h-[80vh]">
       {/* BUST Overlay */}
       {showBust && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 animate-in fade-in duration-200">
-          <div className="text-7xl md:text-9xl font-display font-bold text-destructive animate-in zoom-in-50 duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 animate-in fade-in duration-200">
+          <div className="text-8xl md:text-[12rem] font-display font-bold text-destructive animate-in zoom-in-50 duration-300 tracking-wider">
             BUST!
           </div>
         </div>
       )}
 
+      {/* Set Win Overlay */}
+      {showSetWin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-in fade-in duration-200">
+          <div className="text-4xl md:text-6xl font-display font-bold text-accent animate-in zoom-in-75 duration-300 text-center px-4">
+            🎯 {showSetWin}
+          </div>
+        </div>
+      )}
+
+      {/* Match Win Overlay with Confirm Button */}
+      {matchResult && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 animate-in fade-in duration-200">
+          <div className="text-center space-y-8">
+            <div className="text-6xl md:text-8xl font-display font-bold text-primary animate-in zoom-in-50 duration-500">
+              🏆
+            </div>
+            <div className="text-4xl md:text-7xl font-display font-bold text-primary animate-in slide-in-from-bottom duration-500">
+              {matchResult.winnerName}
+            </div>
+            <div className="text-2xl md:text-4xl text-muted-foreground animate-in fade-in duration-700">
+              vinner kampen!
+            </div>
+            <div className="text-xl md:text-2xl text-muted-foreground">
+              {matchResult.player1Sets} - {matchResult.player2Sets}
+            </div>
+            <div className="flex gap-4 justify-center mt-8">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={undoLastThrow}
+                className="text-lg px-6 py-4"
+              >
+                <Undo2 className="w-5 h-5 mr-2" />
+                Angre siste kast
+              </Button>
+              <Button
+                size="lg"
+                onClick={confirmMatchResult}
+                className="text-lg px-8 py-4 bg-primary hover:bg-primary/90"
+              >
+                <Check className="w-5 h-5 mr-2" />
+                Bekreft resultat
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Match info */}
-      <div className="text-center text-sm text-muted-foreground mb-4">
-        <span className="bg-muted px-3 py-1 rounded-full">
+      <div className="text-center text-sm text-muted-foreground mb-6">
+        <span className="bg-muted px-4 py-2 rounded-full text-base">
           {stage === "group" ? "Gruppespill" : "Sluttspill"} • 301 • 
           {requireDoubleOut ? " Dobbel checkout" : " Single checkout"} • 
-          First to {setsToWin}
+          First to {setsToWin} • Set {setNumber}
         </span>
       </div>
 
-      {/* Side-by-side layout */}
-      <div className="flex flex-col lg:flex-row gap-6">
+      {/* Side-by-side layout - MUCH LARGER */}
+      <div className="flex flex-col xl:flex-row gap-8 items-stretch">
         {/* Left side: Scores */}
-        <div className="lg:w-1/2 space-y-4">
+        <div className="xl:w-1/2 space-y-6">
           {/* Scoreboard */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <PlayerScoreCard
               name={player1?.name || "Spiller 1"}
               score={player1Score}
@@ -262,28 +345,28 @@ export function MatchScoring({
           </div>
 
           {/* Current round */}
-          <div className="bg-muted rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-muted-foreground">
+          <div className="bg-muted rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-base text-muted-foreground">
                 {currentPlayerName}'s tur
               </span>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-xl text-accent">+{roundScore}</span>
-                <span className="text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-3xl text-accent">+{roundScore}</span>
+                <span className="text-muted-foreground text-lg">
                   ({3 - currentThrows.length} piler igjen)
                 </span>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-3 mb-6">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
                   className={cn(
-                    "flex-1 h-14 rounded-md flex items-center justify-center font-bold text-xl",
+                    "flex-1 h-20 rounded-lg flex items-center justify-center font-bold text-2xl",
                     currentThrows[i]
                       ? "bg-primary text-primary-foreground"
-                      : "bg-background border border-border"
+                      : "bg-background border-2 border-border"
                   )}
                 >
                   {currentThrows[i] ? formatThrow(currentThrows[i]) : "-"}
@@ -291,34 +374,35 @@ export function MatchScoring({
               ))}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 variant="outline"
-                size="default"
+                size="lg"
                 onClick={undoLastThrow}
                 disabled={throwHistory.length === 0}
+                className="text-base"
               >
-                <Undo2 className="w-4 h-4 mr-1" />
+                <Undo2 className="w-5 h-5 mr-2" />
                 Angre
               </Button>
               <Button
                 variant="outline"
-                size="default"
+                size="lg"
                 onClick={switchPlayer}
-                className="ml-auto"
+                className="ml-auto text-base"
               >
                 Neste spiller
-                <ArrowRight className="w-4 h-4 ml-1" />
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
         </div>
 
         {/* Right side: Dartboard */}
-        <div className="lg:w-1/2 flex items-center justify-center">
+        <div className="xl:w-1/2 flex items-center justify-center">
           <DartBoard
             onScore={handleScore}
-            disabled={currentThrows.length >= 3}
+            disabled={currentThrows.length >= 3 || !!matchResult}
           />
         </div>
       </div>
@@ -344,25 +428,25 @@ function PlayerScoreCard({
   return (
     <div
       className={cn(
-        "rounded-lg p-4 transition-all",
+        "rounded-xl p-6 transition-all",
         isActive
-          ? "bg-primary/20 border-2 border-primary"
-          : "bg-card border border-border"
+          ? "bg-primary/20 border-3 border-primary shadow-lg"
+          : "bg-card border-2 border-border"
       )}
     >
-      <div className="text-sm text-muted-foreground mb-1 truncate">{name}</div>
+      <div className="text-lg text-muted-foreground mb-2 truncate font-medium">{name}</div>
       <div className={cn(
-        "text-4xl font-display",
+        "text-6xl xl:text-7xl font-display",
         isActive && "text-primary"
       )}>
         {score}
       </div>
-      <div className="flex items-center justify-between mt-2 text-sm">
-        <div className="flex items-center gap-1">
-          <Trophy className="w-4 h-4 text-accent" />
-          <span>{sets}/{setsToWin}</span>
+      <div className="flex items-center justify-between mt-4 text-base">
+        <div className="flex items-center gap-2">
+          <Trophy className="w-5 h-5 text-accent" />
+          <span className="text-lg font-semibold">{sets}/{setsToWin}</span>
         </div>
-        <div className="text-muted-foreground">
+        <div className="text-muted-foreground text-lg">
           {darts} 🎯
         </div>
       </div>

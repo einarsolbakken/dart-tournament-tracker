@@ -313,71 +313,32 @@ async function eliminateLastPlaceAndStartKnockout(tournamentId: string) {
     }
   }
 
-  // Eliminate last place in each group
-  const advancingPlayerIds: string[] = [];
-  
-  for (const groupName of Object.keys(groupedPlayers)) {
-    const groupPlayers = groupedPlayers[groupName].sort((a, b) => {
-      // Sort by points, then sets difference
+  // Sort all players across all groups by performance
+  const allPlayersSorted = [...players]
+    .filter(p => p.group_name)
+    .sort((a, b) => {
+      // Sort by points first, then sets difference
       if (b.group_points !== a.group_points) {
         return b.group_points - a.group_points;
       }
       return (b.group_sets_won - b.group_sets_lost) - (a.group_sets_won - a.group_sets_lost);
     });
 
-    // Last place is eliminated
-    const lastPlace = groupPlayers[groupPlayers.length - 1];
+  // Determine how many should advance (always 8 if > 8 players)
+  const totalPlayers = players.length;
+  const targetAdvancing = totalPlayers > 8 ? 8 : totalPlayers;
+  
+  // Take top performers
+  const advancingPlayerIds = allPlayersSorted.slice(0, targetAdvancing).map(p => p.id);
+  
+  // Mark eliminated players
+  const eliminatedIds = allPlayersSorted.slice(targetAdvancing).map(p => p.id);
+  
+  for (const id of eliminatedIds) {
     await supabase
       .from("players")
       .update({ is_eliminated: true })
-      .eq("id", lastPlace.id);
-
-    // Rest advance
-    for (let i = 0; i < groupPlayers.length - 1; i++) {
-      advancingPlayerIds.push(groupPlayers[i].id);
-    }
-  }
-
-  // If odd number advancing, eliminate the worst second-to-last
-  if (advancingPlayerIds.length % 2 !== 0) {
-    // Find all second-to-last players and eliminate the worst one
-    const secondToLast: { id: string; points: number; setsDiff: number }[] = [];
-    
-    for (const groupName of Object.keys(groupedPlayers)) {
-      const groupPlayers = groupedPlayers[groupName].sort((a, b) => {
-        if (b.group_points !== a.group_points) {
-          return b.group_points - a.group_points;
-        }
-        return (b.group_sets_won - b.group_sets_lost) - (a.group_sets_won - a.group_sets_lost);
-      });
-      
-      if (groupPlayers.length >= 2) {
-        const stl = groupPlayers[groupPlayers.length - 2];
-        secondToLast.push({
-          id: stl.id,
-          points: stl.group_points,
-          setsDiff: stl.group_sets_won - stl.group_sets_lost,
-        });
-      }
-    }
-    
-    // Sort by worst performance
-    secondToLast.sort((a, b) => {
-      if (a.points !== b.points) return a.points - b.points;
-      return a.setsDiff - b.setsDiff;
-    });
-    
-    if (secondToLast.length > 0) {
-      const eliminated = secondToLast[0];
-      await supabase
-        .from("players")
-        .update({ is_eliminated: true })
-        .eq("id", eliminated.id);
-      
-      // Remove from advancing
-      const idx = advancingPlayerIds.indexOf(eliminated.id);
-      if (idx > -1) advancingPlayerIds.splice(idx, 1);
-    }
+      .eq("id", id);
   }
 
   // Generate knockout bracket
