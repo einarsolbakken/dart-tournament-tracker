@@ -2,6 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Trophy, XCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Player {
   id: string;
@@ -36,6 +42,7 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
   const groupNames = [...new Set(players.map(p => p.group_name).filter(Boolean))].sort() as string[];
   
   return (
+    <TooltipProvider delayDuration={100}>
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {groupNames.map(groupName => {
@@ -102,11 +109,20 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
                           )}
                         >
                           <td className="py-2 px-3 text-muted-foreground">{index + 1}</td>
-                          <td className="py-2 px-3 font-medium flex items-center gap-2">
-                            {player.name}
-                            {player.is_eliminated && (
-                              <XCircle className="w-3 h-3 text-destructive" />
-                            )}
+                          <td className="py-2 px-3 font-medium">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex items-center gap-2 max-w-[120px]">
+                                  <span className="truncate">{player.name}</span>
+                                  {player.is_eliminated && (
+                                    <XCircle className="w-3 h-3 text-destructive flex-shrink-0" />
+                                  )}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{player.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </td>
                           <td className="text-center py-2 px-1 font-bold">{matchesPlayed}</td>
                           <td className="text-center py-2 px-1 text-green-500">{wins}</td>
@@ -154,24 +170,40 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
                           canPlay && "hover:border-primary cursor-pointer"
                         )}
                       >
-                        <div className="flex items-center justify-between text-sm">
-                          <span className={cn(
-                            match.winner_id === match.player1_id && "font-bold text-primary"
-                          )}>
-                            {player1?.name || "TBD"}
-                          </span>
+                        <div className="flex items-center justify-between text-sm gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className={cn(
+                                "truncate max-w-[100px]",
+                                match.winner_id === match.player1_id && "font-bold text-primary"
+                              )}>
+                                {player1?.name || "TBD"}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{player1?.name || "TBD"}</p>
+                            </TooltipContent>
+                          </Tooltip>
                           {isCompleted ? (
-                            <span className="font-bold">
+                            <span className="font-bold flex-shrink-0">
                               {match.player1_sets} - {match.player2_sets}
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">vs</span>
+                            <span className="text-muted-foreground flex-shrink-0">vs</span>
                           )}
-                          <span className={cn(
-                            match.winner_id === match.player2_id && "font-bold text-primary"
-                          )}>
-                            {player2?.name || "TBD"}
-                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className={cn(
+                                "truncate max-w-[100px]",
+                                match.winner_id === match.player2_id && "font-bold text-primary"
+                              )}>
+                                {player2?.name || "TBD"}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{player2?.name || "TBD"}</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                         {isCompleted && match.winner_id && (
                           <div className="flex items-center justify-center gap-1 mt-1 text-xs text-accent">
@@ -189,5 +221,6 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
