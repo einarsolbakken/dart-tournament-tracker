@@ -354,12 +354,7 @@ export function MatchScoring({
               <span className="text-base text-muted-foreground">
                 {currentPlayerName}'s tur
               </span>
-              <div className="flex items-center gap-3">
-                <span className="font-bold text-3xl text-accent">+{roundScore}</span>
-                <span className="text-muted-foreground text-lg">
-                  ({3 - currentThrows.length} piler igjen)
-                </span>
-              </div>
+              <span className="font-bold text-3xl text-accent">+{roundScore}</span>
             </div>
             
             <div className="flex items-center gap-3 mb-6">
