@@ -143,7 +143,10 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
       
       {/* Group Matches */}
       <div className="space-y-4">
-        <h3 className="font-display text-2xl">Gruppekamper</h3>
+        <div className="space-y-1">
+          <h3 className="font-display text-2xl">Gruppekamper</h3>
+          <p className="text-sm text-muted-foreground">Trykk på en kamp for å starte</p>
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {groupNames.map(groupName => {
             const groupMatches = matches.filter(m => m.group_name === groupName && m.stage === "group");
