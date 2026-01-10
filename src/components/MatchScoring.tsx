@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { DartBoard } from "./DartBoard";
 import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
@@ -26,6 +26,21 @@ interface MatchResult {
   player2Sets: number;
 }
 
+// Snapshot of the complete game state before each throw
+interface GameStateSnapshot {
+  throw: ThrowRecord;
+  player: 1 | 2;
+  player1Score: number;
+  player2Score: number;
+  player1Darts: number;
+  player2Darts: number;
+  player1Sets: number;
+  player2Sets: number;
+  currentThrows: ThrowRecord[];
+  roundScore: number;
+  setNumber: number;
+}
+
 export function MatchScoring({
   match,
   players,
@@ -49,69 +64,97 @@ export function MatchScoring({
   const [player2Sets, setPlayer2Sets] = useState(0);
   const [currentThrows, setCurrentThrows] = useState<ThrowRecord[]>([]);
   const [roundScore, setRoundScore] = useState(0);
-  const [throwHistory, setThrowHistory] = useState<{ throw: ThrowRecord; player: 1 | 2; prevScore: number; prevDarts: number; prevSets: number }[]>([]);
+  const [history, setHistory] = useState<GameStateSnapshot[]>([]);
   const [showBust, setShowBust] = useState(false);
+  const [bustMessage, setBustMessage] = useState("BUST!");
   const [showSetWin, setShowSetWin] = useState<string | null>(null);
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
-  const [setNumber, setSetNumber] = useState(1); // Track which set we're on for alternating starts
+  const [setNumber, setSetNumber] = useState(1);
+
+  // Use ref to track if we're in the middle of a player switch
+  const switchingPlayerRef = useRef(false);
 
   const currentPlayerScore = currentPlayer === 1 ? player1Score : player2Score;
   const currentPlayerName = currentPlayer === 1 ? player1?.name : player2?.name;
 
   const handleScore = useCallback((score: number, multiplier: number) => {
-    if (currentThrows.length >= 3 || matchResult) return;
+    if (currentThrows.length >= 3 || matchResult || switchingPlayerRef.current) return;
 
     const points = score * multiplier;
     const newScore = currentPlayerScore - points;
 
-    // Check for bust - in single checkout mode, score of 0 is valid, in double checkout need to check
-    const isBust = newScore < 0 || 
-      (!requireDoubleOut && newScore < 0) || 
-      (requireDoubleOut && newScore === 1);
+    // Save complete state snapshot BEFORE making any changes
+    const snapshot: GameStateSnapshot = {
+      throw: { score, multiplier },
+      player: currentPlayer,
+      player1Score,
+      player2Score,
+      player1Darts,
+      player2Darts,
+      player1Sets,
+      player2Sets,
+      currentThrows: [...currentThrows],
+      roundScore,
+      setNumber,
+    };
 
-    if (isBust) {
-      // Show big BUST overlay - longer duration
+    // Calculate the score at start of this player's turn (before any throws this round)
+    const startOfTurnScore = currentPlayerScore + roundScore;
+
+    // Check for bust conditions
+    // Going below 0, or to exactly 1 (impossible to checkout with double from 1)
+    const isBust = newScore < 0 || (requireDoubleOut && newScore === 1);
+
+    // Check for invalid checkout (hitting exactly 0 without double in double-out mode)
+    const isInvalidCheckout = newScore === 0 && requireDoubleOut && multiplier !== 2 && score !== 50;
+
+    if (isBust || isInvalidCheckout) {
+      // Save to history so undo works
+      setHistory([...history, snapshot]);
+
+      // Set appropriate bust message
+      if (isInvalidCheckout) {
+        setBustMessage("Må checke ut med dobbel!");
+      } else {
+        setBustMessage("BUST!");
+      }
       setShowBust(true);
       setTimeout(() => setShowBust(false), 2500);
-      
-      // Reset score to before this round and switch player
+
+      // Register the throw, then bust the whole round
+      const newThrow: ThrowRecord = { score, multiplier };
+      const newThrows = [...currentThrows, newThrow];
+      setCurrentThrows(newThrows);
+
+      // Update darts count for the thrown dart
       if (currentPlayer === 1) {
-        setPlayer1Score(player1Score + roundScore);
-        setPlayer1Darts(player1Darts - currentThrows.length);
+        setPlayer1Darts(player1Darts + 1);
+        // Reset score to start of turn (annulerer hele runden)
+        setPlayer1Score(startOfTurnScore);
       } else {
-        setPlayer2Score(player2Score + roundScore);
-        setPlayer2Darts(player2Darts - currentThrows.length);
+        setPlayer2Darts(player2Darts + 1);
+        // Reset score to start of turn (annulerer hele runden)
+        setPlayer2Score(startOfTurnScore);
       }
-      setTimeout(() => switchPlayer(), 300);
+
+      // Switch to next player after a short delay
+      switchingPlayerRef.current = true;
+      setTimeout(() => {
+        switchPlayer();
+        switchingPlayerRef.current = false;
+      }, 500);
       return;
     }
 
-    // Check checkout rules
-    if (newScore === 0) {
-      if (requireDoubleOut && multiplier !== 2 && score !== 50) {
-        // Show bust for invalid checkout
-        setShowBust(true);
-        setTimeout(() => setShowBust(false), 2500);
-        return;
-      }
-    }
+    // Valid throw - save to history and apply
+    setHistory([...history, snapshot]);
 
     const newThrow: ThrowRecord = { score, multiplier };
     const newThrows = [...currentThrows, newThrow];
     setCurrentThrows(newThrows);
     setRoundScore(roundScore + points);
 
-    // Save to history for undo
-    const historyEntry = {
-      throw: newThrow,
-      player: currentPlayer,
-      prevScore: currentPlayer === 1 ? player1Score : player2Score,
-      prevDarts: currentPlayer === 1 ? player1Darts : player2Darts,
-      prevSets: currentPlayer === 1 ? player1Sets : player2Sets,
-    };
-    setThrowHistory([...throwHistory, historyEntry]);
-
-    // Update score
+    // Update score and darts
     if (currentPlayer === 1) {
       setPlayer1Score(newScore);
       setPlayer1Darts(player1Darts + 1);
@@ -120,7 +163,7 @@ export function MatchScoring({
       setPlayer2Darts(player2Darts + 1);
     }
 
-    // Check for set win
+    // Check for set win (valid checkout)
     if (newScore === 0) {
       handleSetWin();
       return;
@@ -128,9 +171,13 @@ export function MatchScoring({
 
     // Auto-switch after 3 darts
     if (newThrows.length >= 3) {
-      setTimeout(() => switchPlayer(), 500);
+      switchingPlayerRef.current = true;
+      setTimeout(() => {
+        switchPlayer();
+        switchingPlayerRef.current = false;
+      }, 500);
     }
-  }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts, player1Score, player2Score, requireDoubleOut, matchResult]);
+  }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts, player1Score, player2Score, player1Sets, player2Sets, setNumber, requireDoubleOut, matchResult, history]);
 
   const handleSetWin = () => {
     if (currentPlayer === 1) {
@@ -207,46 +254,30 @@ export function MatchScoring({
   };
 
   const undoLastThrow = () => {
-    if (throwHistory.length === 0) return;
+    if (history.length === 0) return;
 
     // If match was won, clear the result to allow undo
     if (matchResult) {
       setMatchResult(null);
     }
 
-    const lastEntry = throwHistory[throwHistory.length - 1];
+    // Get the last snapshot - this contains the state BEFORE that throw
+    const lastSnapshot = history[history.length - 1];
 
     // Remove from history
-    setThrowHistory(throwHistory.slice(0, -1));
+    setHistory(history.slice(0, -1));
 
-    // Restore state for the player who made the throw
-    if (lastEntry.player === 1) {
-      setPlayer1Score(lastEntry.prevScore);
-      setPlayer1Darts(lastEntry.prevDarts);
-      setPlayer1Sets(lastEntry.prevSets);
-    } else {
-      setPlayer2Score(lastEntry.prevScore);
-      setPlayer2Darts(lastEntry.prevDarts);
-      setPlayer2Sets(lastEntry.prevSets);
-    }
-
-    // If it was current player's throw, update current throws
-    if (lastEntry.player === currentPlayer) {
-      setCurrentThrows(currentThrows.slice(0, -1));
-      setRoundScore(Math.max(0, roundScore - lastEntry.throw.score * lastEntry.throw.multiplier));
-    } else {
-      // Switch back to the player who made the throw
-      setCurrentPlayer(lastEntry.player);
-      // Reconstruct their throws from history
-      const playerThrows = throwHistory
-        .slice(0, -1)
-        .filter(h => h.player === lastEntry.player)
-        .slice(-2)
-        .map(h => h.throw);
-      setCurrentThrows(playerThrows);
-      const playerRoundScore = playerThrows.reduce((sum, t) => sum + t.score * t.multiplier, 0);
-      setRoundScore(playerRoundScore);
-    }
+    // Restore complete game state from snapshot
+    setPlayer1Score(lastSnapshot.player1Score);
+    setPlayer2Score(lastSnapshot.player2Score);
+    setPlayer1Darts(lastSnapshot.player1Darts);
+    setPlayer2Darts(lastSnapshot.player2Darts);
+    setPlayer1Sets(lastSnapshot.player1Sets);
+    setPlayer2Sets(lastSnapshot.player2Sets);
+    setSetNumber(lastSnapshot.setNumber);
+    setCurrentPlayer(lastSnapshot.player);
+    setCurrentThrows(lastSnapshot.currentThrows);
+    setRoundScore(lastSnapshot.roundScore);
   };
 
   const formatThrow = (t: ThrowRecord) => {
@@ -261,8 +292,8 @@ export function MatchScoring({
       {/* BUST Overlay */}
       {showBust && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 animate-in fade-in duration-200">
-          <div className="text-8xl md:text-[12rem] font-display font-bold text-destructive animate-in zoom-in-50 duration-300 tracking-wider">
-            BUST!
+          <div className="text-6xl md:text-[10rem] font-display font-bold text-destructive animate-in zoom-in-50 duration-300 tracking-wider text-center px-4">
+            {bustMessage}
           </div>
         </div>
       )}
@@ -378,7 +409,7 @@ export function MatchScoring({
                 variant="outline"
                 size="lg"
                 onClick={undoLastThrow}
-                disabled={throwHistory.length === 0}
+                disabled={history.length === 0}
                 className="text-base"
               >
                 <Undo2 className="w-5 h-5 mr-2" />
