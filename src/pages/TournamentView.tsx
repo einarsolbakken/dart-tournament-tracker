@@ -4,47 +4,21 @@ import { Header } from "@/components/Header";
 import { TournamentBracket } from "@/components/TournamentBracket";
 import { GroupStandings } from "@/components/GroupStandings";
 import { ScoreDialog } from "@/components/ScoreDialog";
-import { useTournament, usePlayers, useMatches, Match, useDeleteTournament } from "@/hooks/useTournaments";
+import { useTournament, usePlayers, useMatches, Match } from "@/hooks/useTournaments";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Target, Trophy, Trash2, Users, Swords } from "lucide-react";
+import { ArrowLeft, Calendar, Target, Trophy, Users, Swords } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 const TournamentView = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { data: tournament, isLoading: tournamentLoading } = useTournament(id || "");
   const { data: players } = usePlayers(id || "");
   const { data: matches } = useMatches(id || "");
-  const deleteTournament = useDeleteTournament();
   
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-
-  const handleDelete = async () => {
-    if (!id) return;
-    try {
-      await deleteTournament.mutateAsync(id);
-      toast.success("Turnering slettet");
-      navigate("/");
-    } catch (error) {
-      toast.error("Kunne ikke slette turnering");
-    }
-  };
 
   if (tournamentLoading) {
     return (
@@ -105,29 +79,6 @@ const TournamentView = () => {
               Tilbake
             </Button>
           </Link>
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" className="text-destructive hover:text-destructive">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Slett
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Slett turnering?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Er du sikker på at du vil slette denne turneringen? Dette kan ikke angres.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                  Slett
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
 
         {/* Tournament Header */}

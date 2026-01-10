@@ -152,42 +152,20 @@ export function DartBoard({ onScore, disabled }: DartBoardProps) {
         />
       </svg>
 
-      {/* Quick score buttons - under dartboard */}
-      <div className="flex justify-center gap-4 mt-6">
-        <QuickButton onClick={() => onScore(0, 1)} disabled={disabled}>
-          Miss
-        </QuickButton>
-        <QuickButton onClick={() => onScore(25, 1)} disabled={disabled}>
-          25
-        </QuickButton>
-        <QuickButton onClick={() => onScore(50, 1)} disabled={disabled}>
-          Bull
-        </QuickButton>
+      {/* Miss button - under dartboard */}
+      <div className="flex justify-center mt-6">
+        <button
+          onClick={() => onScore(0, 1)}
+          disabled={disabled}
+          className={cn(
+            "px-10 py-4 rounded-lg text-lg font-bold transition-colors",
+            "bg-destructive/80 hover:bg-destructive text-destructive-foreground",
+            disabled && "opacity-50 cursor-not-allowed"
+          )}
+        >
+          Bom
+        </button>
       </div>
     </div>
-  );
-}
-
-function QuickButton({ 
-  children, 
-  onClick, 
-  disabled 
-}: { 
-  children: React.ReactNode; 
-  onClick: () => void; 
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "px-6 py-3 rounded-lg text-base font-semibold transition-colors",
-        "bg-muted hover:bg-muted/80 text-foreground",
-        disabled && "opacity-50 cursor-not-allowed"
-      )}
-    >
-      {children}
-    </button>
   );
 }
