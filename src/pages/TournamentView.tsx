@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { TournamentBracket } from "@/components/TournamentBracket";
 import { GroupStandings } from "@/components/GroupStandings";
 import { ScoreDialog } from "@/components/ScoreDialog";
+import { EditMatchDialog } from "@/components/EditMatchDialog";
 import { useTournament, usePlayers, useMatches, Match } from "@/hooks/useTournaments";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ const TournamentView = () => {
   const { data: matches } = useMatches(id || "");
   
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [editMatch, setEditMatch] = useState<Match | null>(null);
 
   if (tournamentLoading) {
     return (
@@ -139,6 +141,7 @@ const TournamentView = () => {
                 players={players as any}
                 matches={groupMatches as any}
                 onMatchClick={(match) => setSelectedMatch(match as any)}
+                onEditMatch={(match) => setEditMatch(match as any)}
               />
             )}
           </TabsContent>
@@ -167,6 +170,13 @@ const TournamentView = () => {
         players={players || []}
         tournamentId={id || ""}
         onClose={() => setSelectedMatch(null)}
+      />
+
+      <EditMatchDialog
+        match={editMatch}
+        players={players || []}
+        tournamentId={id || ""}
+        onClose={() => setEditMatch(null)}
       />
     </div>
   );
