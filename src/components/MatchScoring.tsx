@@ -10,7 +10,7 @@ interface MatchScoringProps {
   players: Player[];
   tournamentId: string;
   stage: "group" | "knockout";
-  onComplete: (winnerId: string, loserId: string, player1Sets: number, player2Sets: number) => void;
+  onComplete: (winnerId: string, loserId: string, player1Sets: number, player2Sets: number, player1TotalScore: number, player1Darts: number, player2TotalScore: number, player2Darts: number) => void;
 }
 
 interface ThrowRecord {
@@ -24,6 +24,10 @@ interface MatchResult {
   winnerName: string;
   player1Sets: number;
   player2Sets: number;
+  player1TotalScore: number;
+  player1TotalDarts: number;
+  player2TotalScore: number;
+  player2TotalDarts: number;
 }
 
 // Snapshot of the complete game state before each throw
@@ -36,6 +40,10 @@ interface GameStateSnapshot {
   player2Darts: number;
   player1Sets: number;
   player2Sets: number;
+  player1TotalScore: number;
+  player2TotalScore: number;
+  player1TotalDarts: number;
+  player2TotalDarts: number;
   currentThrows: ThrowRecord[];
   roundScore: number;
   setNumber: number;
@@ -62,6 +70,10 @@ export function MatchScoring({
   const [player2Darts, setPlayer2Darts] = useState(0);
   const [player1Sets, setPlayer1Sets] = useState(0);
   const [player2Sets, setPlayer2Sets] = useState(0);
+  const [player1TotalScore, setPlayer1TotalScore] = useState(0);
+  const [player2TotalScore, setPlayer2TotalScore] = useState(0);
+  const [player1TotalDarts, setPlayer1TotalDarts] = useState(0);
+  const [player2TotalDarts, setPlayer2TotalDarts] = useState(0);
   const [currentThrows, setCurrentThrows] = useState<ThrowRecord[]>([]);
   const [roundScore, setRoundScore] = useState(0);
   const [history, setHistory] = useState<GameStateSnapshot[]>([]);
@@ -93,6 +105,10 @@ export function MatchScoring({
       player2Darts,
       player1Sets,
       player2Sets,
+      player1TotalScore,
+      player2TotalScore,
+      player1TotalDarts,
+      player2TotalDarts,
       currentThrows: [...currentThrows],
       roundScore,
       setNumber,
@@ -154,13 +170,17 @@ export function MatchScoring({
     setCurrentThrows(newThrows);
     setRoundScore(roundScore + points);
 
-    // Update score and darts
+    // Update score, darts, and total tracking
     if (currentPlayer === 1) {
       setPlayer1Score(newScore);
       setPlayer1Darts(player1Darts + 1);
+      setPlayer1TotalScore(player1TotalScore + points);
+      setPlayer1TotalDarts(player1TotalDarts + 1);
     } else {
       setPlayer2Score(newScore);
       setPlayer2Darts(player2Darts + 1);
+      setPlayer2TotalScore(player2TotalScore + points);
+      setPlayer2TotalDarts(player2TotalDarts + 1);
     }
 
     // Check for set win (valid checkout)
@@ -192,6 +212,10 @@ export function MatchScoring({
           winnerName: player1?.name || "Spiller 1",
           player1Sets: newSets,
           player2Sets,
+          player1TotalScore,
+          player1TotalDarts,
+          player2TotalScore,
+          player2TotalDarts,
         });
         return;
       }
@@ -211,6 +235,10 @@ export function MatchScoring({
           winnerName: player2?.name || "Spiller 2",
           player1Sets,
           player2Sets: newSets,
+          player1TotalScore,
+          player1TotalDarts,
+          player2TotalScore,
+          player2TotalDarts,
         });
         return;
       }
@@ -226,7 +254,16 @@ export function MatchScoring({
 
   const confirmMatchResult = () => {
     if (!matchResult) return;
-    onComplete(matchResult.winnerId, matchResult.loserId, matchResult.player1Sets, matchResult.player2Sets);
+    onComplete(
+      matchResult.winnerId, 
+      matchResult.loserId, 
+      matchResult.player1Sets, 
+      matchResult.player2Sets,
+      matchResult.player1TotalScore,
+      matchResult.player1TotalDarts,
+      matchResult.player2TotalScore,
+      matchResult.player2TotalDarts
+    );
   };
 
   const resetSet = () => {
@@ -272,6 +309,11 @@ export function MatchScoring({
     setPlayer2Score(lastSnapshot.player2Score);
     setPlayer1Darts(lastSnapshot.player1Darts);
     setPlayer2Darts(lastSnapshot.player2Darts);
+    setPlayer1TotalScore(lastSnapshot.player1TotalScore);
+    setPlayer2TotalScore(lastSnapshot.player2TotalScore);
+    setPlayer1TotalDarts(lastSnapshot.player1TotalDarts);
+    setPlayer2TotalDarts(lastSnapshot.player2TotalDarts);
+    setPlayer2Darts(lastSnapshot.player2Darts);
     setPlayer1Sets(lastSnapshot.player1Sets);
     setPlayer2Sets(lastSnapshot.player2Sets);
     setSetNumber(lastSnapshot.setNumber);
@@ -281,10 +323,10 @@ export function MatchScoring({
   };
 
   const formatThrow = (t: ThrowRecord) => {
-    if (t.score === 0) return "Miss";
-    if (t.multiplier === 2) return `D${t.score}`;
-    if (t.multiplier === 3) return `T${t.score}`;
-    return `${t.score}`;
+    if (t.score === 0) return { text: "Bom", isMiss: true };
+    if (t.multiplier === 2) return { text: `D${t.score}`, isMiss: false };
+    if (t.multiplier === 3) return { text: `T${t.score}`, isMiss: false };
+    return { text: `${t.score}`, isMiss: false };
   };
 
   return (
@@ -365,7 +407,6 @@ export function MatchScoring({
               name={player1?.name || "Spiller 1"}
               score={player1Score}
               sets={player1Sets}
-              darts={player1Darts}
               isActive={currentPlayer === 1}
               setsToWin={setsToWin}
             />
@@ -373,7 +414,6 @@ export function MatchScoring({
               name={player2?.name || "Spiller 2"}
               score={player2Score}
               sets={player2Sets}
-              darts={player2Darts}
               isActive={currentPlayer === 2}
               setsToWin={setsToWin}
             />
@@ -395,11 +435,13 @@ export function MatchScoring({
                   className={cn(
                     "flex-1 h-20 rounded-lg flex items-center justify-center font-bold text-2xl",
                     currentThrows[i]
-                      ? "bg-primary text-primary-foreground"
+                      ? currentThrows[i].score === 0 
+                        ? "bg-destructive text-destructive-foreground"
+                        : "bg-primary text-primary-foreground"
                       : "bg-background border-2 border-border"
                   )}
                 >
-                  {currentThrows[i] ? formatThrow(currentThrows[i]) : "-"}
+                  {currentThrows[i] ? formatThrow(currentThrows[i]).text : "-"}
                 </div>
               ))}
             </div>
@@ -444,14 +486,12 @@ function PlayerScoreCard({
   name,
   score,
   sets,
-  darts,
   isActive,
   setsToWin,
 }: {
   name: string;
   score: number;
   sets: number;
-  darts: number;
   isActive: boolean;
   setsToWin: number;
 }) {
@@ -471,13 +511,10 @@ function PlayerScoreCard({
       )}>
         {score}
       </div>
-      <div className="flex items-center justify-between mt-4 text-base">
+      <div className="flex items-center mt-4 text-base">
         <div className="flex items-center gap-2">
           <Trophy className="w-5 h-5 text-accent" />
           <span className="text-lg font-semibold">{sets}/{setsToWin}</span>
-        </div>
-        <div className="text-muted-foreground text-lg">
-          {darts} 🎯
         </div>
       </div>
     </div>

@@ -22,6 +22,8 @@ export interface Player {
   group_points: number;
   group_sets_won: number;
   group_sets_lost: number;
+  total_darts: number;
+  total_score: number;
   is_eliminated: boolean;
   created_at: string;
 }
@@ -38,6 +40,10 @@ export interface Match {
   player2_score: number;
   player1_sets: number;
   player2_sets: number;
+  player1_total_score: number;
+  player1_darts: number;
+  player2_total_score: number;
+  player2_darts: number;
   sets_to_win: number;
   status: string;
   stage: string;
@@ -204,6 +210,10 @@ export function useUpdateGroupMatch() {
       loserId,
       player1Sets,
       player2Sets,
+      player1TotalScore,
+      player1Darts,
+      player2TotalScore,
+      player2Darts,
       tournamentId,
     }: {
       matchId: string;
@@ -211,6 +221,10 @@ export function useUpdateGroupMatch() {
       loserId: string;
       player1Sets: number;
       player2Sets: number;
+      player1TotalScore: number;
+      player1Darts: number;
+      player2TotalScore: number;
+      player2Darts: number;
       tournamentId: string;
     }) => {
       // Update the match
@@ -220,6 +234,10 @@ export function useUpdateGroupMatch() {
           winner_id: winnerId,
           player1_sets: player1Sets,
           player2_sets: player2Sets,
+          player1_total_score: player1TotalScore,
+          player1_darts: player1Darts,
+          player2_total_score: player2TotalScore,
+          player2_darts: player2Darts,
           status: "completed",
         })
         .eq("id", matchId)
@@ -238,6 +256,8 @@ export function useUpdateGroupMatch() {
       if (winner) {
         const winnerSets = match.player1_id === winnerId ? player1Sets : player2Sets;
         const loserSets = match.player1_id === winnerId ? player2Sets : player1Sets;
+        const winnerDarts = match.player1_id === winnerId ? player1Darts : player2Darts;
+        const winnerScoreThrown = match.player1_id === winnerId ? player1TotalScore : player2TotalScore;
         
         await supabase
           .from("players")
@@ -245,6 +265,8 @@ export function useUpdateGroupMatch() {
             group_points: (winner.group_points || 0) + 2,
             group_sets_won: (winner.group_sets_won || 0) + winnerSets,
             group_sets_lost: (winner.group_sets_lost || 0) + loserSets,
+            total_darts: (winner.total_darts || 0) + winnerDarts,
+            total_score: (winner.total_score || 0) + winnerScoreThrown,
           })
           .eq("id", winnerId);
       }
@@ -259,12 +281,16 @@ export function useUpdateGroupMatch() {
       if (loser) {
         const loserSets = match.player1_id === loserId ? player1Sets : player2Sets;
         const winnerSets = match.player1_id === loserId ? player2Sets : player1Sets;
+        const loserDarts = match.player1_id === loserId ? player1Darts : player2Darts;
+        const loserScoreThrown = match.player1_id === loserId ? player1TotalScore : player2TotalScore;
         
         await supabase
           .from("players")
           .update({
             group_sets_won: (loser.group_sets_won || 0) + loserSets,
             group_sets_lost: (loser.group_sets_lost || 0) + winnerSets,
+            total_darts: (loser.total_darts || 0) + loserDarts,
+            total_score: (loser.total_score || 0) + loserScoreThrown,
           })
           .eq("id", loserId);
       }
@@ -385,12 +411,20 @@ export function useUpdateKnockoutMatch() {
       winnerId,
       player1Sets,
       player2Sets,
+      player1TotalScore,
+      player1Darts,
+      player2TotalScore,
+      player2Darts,
       tournamentId,
     }: {
       matchId: string;
       winnerId: string;
       player1Sets: number;
       player2Sets: number;
+      player1TotalScore: number;
+      player1Darts: number;
+      player2TotalScore: number;
+      player2Darts: number;
       tournamentId: string;
     }) => {
       // Update the match
@@ -402,6 +436,10 @@ export function useUpdateKnockoutMatch() {
           player2_sets: player2Sets,
           player1_score: player1Sets,
           player2_score: player2Sets,
+          player1_total_score: player1TotalScore,
+          player1_darts: player1Darts,
+          player2_total_score: player2TotalScore,
+          player2_darts: player2Darts,
           status: "completed",
         })
         .eq("id", matchId)

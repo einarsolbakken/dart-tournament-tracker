@@ -46,7 +46,11 @@ export function ScoreDialog({
     winnerId: string,
     loserId: string,
     player1Sets: number,
-    player2Sets: number
+    player2Sets: number,
+    player1TotalScore: number,
+    player1Darts: number,
+    player2TotalScore: number,
+    player2Darts: number
   ) => {
     try {
       if (isGroupStage) {
@@ -56,6 +60,10 @@ export function ScoreDialog({
           loserId,
           player1Sets,
           player2Sets,
+          player1TotalScore,
+          player1Darts,
+          player2TotalScore,
+          player2Darts,
           tournamentId,
         });
       } else {
@@ -64,6 +72,10 @@ export function ScoreDialog({
           winnerId,
           player1Sets,
           player2Sets,
+          player1TotalScore,
+          player1Darts,
+          player2TotalScore,
+          player2Darts,
           tournamentId,
         });
       }

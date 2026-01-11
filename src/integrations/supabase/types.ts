@@ -20,12 +20,16 @@ export type Database = {
           group_name: string | null
           id: string
           match_number: number
+          player1_darts: number | null
           player1_id: string | null
           player1_score: number | null
           player1_sets: number | null
+          player1_total_score: number | null
+          player2_darts: number | null
           player2_id: string | null
           player2_score: number | null
           player2_sets: number | null
+          player2_total_score: number | null
           round: number
           sets_to_win: number | null
           stage: string
@@ -38,12 +42,16 @@ export type Database = {
           group_name?: string | null
           id?: string
           match_number: number
+          player1_darts?: number | null
           player1_id?: string | null
           player1_score?: number | null
           player1_sets?: number | null
+          player1_total_score?: number | null
+          player2_darts?: number | null
           player2_id?: string | null
           player2_score?: number | null
           player2_sets?: number | null
+          player2_total_score?: number | null
           round: number
           sets_to_win?: number | null
           stage?: string
@@ -56,12 +64,16 @@ export type Database = {
           group_name?: string | null
           id?: string
           match_number?: number
+          player1_darts?: number | null
           player1_id?: string | null
           player1_score?: number | null
           player1_sets?: number | null
+          player1_total_score?: number | null
+          player2_darts?: number | null
           player2_id?: string | null
           player2_score?: number | null
           player2_sets?: number | null
+          player2_total_score?: number | null
           round?: number
           sets_to_win?: number | null
           stage?: string
@@ -111,6 +123,8 @@ export type Database = {
           is_eliminated: boolean | null
           name: string
           seed: number | null
+          total_darts: number | null
+          total_score: number | null
           tournament_id: string
         }
         Insert: {
@@ -123,6 +137,8 @@ export type Database = {
           is_eliminated?: boolean | null
           name: string
           seed?: number | null
+          total_darts?: number | null
+          total_score?: number | null
           tournament_id: string
         }
         Update: {
@@ -135,6 +151,8 @@ export type Database = {
           is_eliminated?: boolean | null
           name?: string
           seed?: number | null
+          total_darts?: number | null
+          total_score?: number | null
           tournament_id?: string
         }
         Relationships: [

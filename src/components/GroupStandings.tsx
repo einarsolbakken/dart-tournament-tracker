@@ -16,6 +16,8 @@ interface Player {
   group_points: number;
   group_sets_won: number;
   group_sets_lost: number;
+  total_darts: number;
+  total_score: number;
   is_eliminated: boolean;
 }
 
@@ -27,6 +29,10 @@ interface Match {
   winner_id: string | null;
   player1_sets: number;
   player2_sets: number;
+  player1_total_score: number;
+  player1_darts: number;
+  player2_total_score: number;
+  player2_darts: number;
   status: string;
   stage: string;
 }
@@ -35,9 +41,17 @@ interface GroupStandingsProps {
   players: Player[];
   matches: Match[];
   onMatchClick: (match: Match) => void;
+  onEditMatch?: (match: Match) => void;
 }
 
-export function GroupStandings({ players, matches, onMatchClick }: GroupStandingsProps) {
+// Calculate dart average: (total score / total darts) * 3
+function calculateAvg(totalScore: number, totalDarts: number): string {
+  if (totalDarts === 0) return "-";
+  const avg = (totalScore / totalDarts) * 3;
+  return avg.toFixed(1);
+}
+
+export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: GroupStandingsProps) {
   // Get unique group names
   const groupNames = [...new Set(players.map(p => p.group_name).filter(Boolean))].sort() as string[];
   
@@ -94,10 +108,8 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
                       const wins = playerMatches.filter(m => m.winner_id === player.id).length;
                       const losses = matchesPlayed - wins;
                       
-                      // Calculate average per 3 darts (placeholder - would need actual dart data)
-                      // For now show sets difference as a simple stat
-                      const setsDiff = player.group_sets_won - player.group_sets_lost;
-                      const avgDisplay = setsDiff >= 0 ? `+${setsDiff}` : `${setsDiff}`;
+                      // Calculate average per 3 darts using real data
+                      const avgDisplay = calculateAvg(player.total_score || 0, player.total_darts || 0);
                       
                       return (
                         <tr 
@@ -163,13 +175,23 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
                     const isCompleted = match.status === "completed";
                     const canPlay = match.player1_id && match.player2_id && !isCompleted;
                     
+                    // Calculate match avg for each player when completed
+                    const player1MatchAvg = isCompleted ? calculateAvg(match.player1_total_score || 0, match.player1_darts || 0) : null;
+                    const player2MatchAvg = isCompleted ? calculateAvg(match.player2_total_score || 0, match.player2_darts || 0) : null;
+                    
                     return (
                       <div
                         key={match.id}
-                        onClick={() => canPlay && onMatchClick(match as any)}
+                        onClick={() => {
+                          if (canPlay) {
+                            onMatchClick(match as any);
+                          } else if (isCompleted && onEditMatch) {
+                            onEditMatch(match);
+                          }
+                        }}
                         className={cn(
                           "p-3 rounded-lg border transition-all",
-                          isCompleted && "bg-muted/50",
+                          isCompleted && "bg-muted/50 hover:border-accent cursor-pointer",
                           canPlay && "hover:border-primary cursor-pointer"
                         )}
                       >
@@ -212,6 +234,12 @@ export function GroupStandings({ players, matches, onMatchClick }: GroupStanding
                           <div className="flex items-center justify-center gap-1 mt-1 text-xs text-accent">
                             <Trophy className="w-3 h-3" />
                             {players.find(p => p.id === match.winner_id)?.name}
+                          </div>
+                        )}
+                        {isCompleted && (player1MatchAvg !== "-" || player2MatchAvg !== "-") && (
+                          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                            <span>Avg: {player1MatchAvg}</span>
+                            <span>Avg: {player2MatchAvg}</span>
                           </div>
                         )}
                       </div>
