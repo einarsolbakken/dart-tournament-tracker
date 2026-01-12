@@ -88,6 +88,7 @@ export function MatchScoring({
   const [showSetWin, setShowSetWin] = useState<string | null>(null);
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const [setNumber, setSetNumber] = useState(1);
+  const [announceScore, setAnnounceScore] = useState<number | null>(null);
 
   // Use ref to track if we're in the middle of a player switch
   const switchingPlayerRef = useRef(false);
@@ -199,30 +200,37 @@ export function MatchScoring({
     const newRoundScore = roundScore + points;
     const is180 = newThrows.length === 3 && newRoundScore === 180;
 
-    // Auto-switch after 3 darts
+    // Auto-switch after 3 darts - show score announcement first
     if (newThrows.length >= 3) {
       switchingPlayerRef.current = true;
+      
+      // Show the score announcement for the referee
+      setAnnounceScore(newRoundScore);
       
       if (is180) {
         // Play 180 sound and wait for it to finish before switching
         const audio = create180Audio();
         audio.onended = () => {
+          setAnnounceScore(null);
           switchPlayer();
           switchingPlayerRef.current = false;
         };
         audio.play().catch(err => {
           console.log('Could not play 180 sound:', err);
-          // Fallback: switch after short delay if audio fails
+          // Fallback: switch after delay if audio fails
           setTimeout(() => {
+            setAnnounceScore(null);
             switchPlayer();
             switchingPlayerRef.current = false;
-          }, 500);
+          }, 2000);
         });
       } else {
+        // Show score for 2 seconds then switch
         setTimeout(() => {
+          setAnnounceScore(null);
           switchPlayer();
           switchingPlayerRef.current = false;
-        }, 500);
+        }, 2000);
       }
     }
   }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts, player1Score, player2Score, player1Sets, player2Sets, setNumber, requireDoubleOut, matchResult, history]);
@@ -373,6 +381,28 @@ export function MatchScoring({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-in fade-in duration-200">
           <div className="text-4xl md:text-6xl font-display font-bold text-accent animate-in zoom-in-75 duration-300 text-center px-4">
             🎯 {showSetWin}
+          </div>
+        </div>
+      )}
+
+      {/* Score Announcement Overlay for Referee */}
+      {announceScore !== null && !showBust && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 animate-in fade-in duration-200">
+          <div className="text-center">
+            <div className="text-2xl md:text-3xl text-muted-foreground mb-4 animate-in fade-in duration-300">
+              {currentPlayerName}
+            </div>
+            <div className={cn(
+              "text-[8rem] md:text-[12rem] font-display font-bold animate-in zoom-in-50 duration-300 tracking-tight",
+              announceScore === 180 ? "text-primary" : "text-accent"
+            )}>
+              {announceScore}
+            </div>
+            {announceScore === 180 && (
+              <div className="text-4xl md:text-6xl mt-4 animate-in slide-in-from-bottom duration-500">
+                🎯🔥🎯
+              </div>
+            )}
           </div>
         </div>
       )}
