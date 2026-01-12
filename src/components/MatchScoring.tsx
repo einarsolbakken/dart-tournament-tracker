@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 // Create video element for 180 sound (MP4 requires video element for reliable playback)
 const create180Audio = () => {
   const video = document.createElement('video');
-  video.src = '/sounds/180.mp4';
+  // Use import.meta.env.BASE_URL to handle GitHub Pages subdirectory deployment
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  video.src = `${baseUrl}sounds/180.mp4`;
   video.currentTime = 1; // Start from second 1
   video.volume = 1.0;
   return video;
