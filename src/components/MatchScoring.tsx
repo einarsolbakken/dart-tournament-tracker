@@ -1,10 +1,16 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { DartBoard } from "./DartBoard";
 import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
 import { Trophy, Undo2, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Create audio instance for 180 sound
+const create180Audio = () => {
+  const audio = new Audio('/sounds/180.mp4');
+  audio.currentTime = 1; // Start from second 1
+  return audio;
+};
 interface MatchScoringProps {
   match: Match;
   players: Player[];
@@ -169,6 +175,13 @@ export function MatchScoring({
     const newThrows = [...currentThrows, newThrow];
     setCurrentThrows(newThrows);
     setRoundScore(roundScore + points);
+
+    // Check for 180 (3 triple 20s = 180 points after 3 throws)
+    const newRoundScore = roundScore + points;
+    if (newThrows.length === 3 && newRoundScore === 180) {
+      const audio = create180Audio();
+      audio.play().catch(err => console.log('Could not play 180 sound:', err));
+    }
 
     // Update score, darts, and total tracking
     if (currentPlayer === 1) {
