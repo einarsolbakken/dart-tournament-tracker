@@ -51,9 +51,16 @@ function calculateAvg(totalScore: number, totalDarts: number): string {
   return avg.toFixed(1);
 }
 
+// Threshold for showing tooltip on names (characters)
+const NAME_TRUNCATE_THRESHOLD = 12;
+
 export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: GroupStandingsProps) {
   // Get unique group names
   const groupNames = [...new Set(players.map(p => p.group_name).filter(Boolean))].sort() as string[];
+  
+  // Check if all group matches are completed
+  const allGroupMatches = matches.filter(m => m.stage === "group");
+  const allGroupMatchesCompleted = allGroupMatches.length > 0 && allGroupMatches.every(m => m.status === "completed");
   
   return (
     <TooltipProvider delayDuration={100}>
@@ -122,19 +129,28 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
                         >
                           <td className="py-2 px-3 text-muted-foreground">{index + 1}</td>
                           <td className="py-2 px-3 font-medium">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="flex items-center gap-2 max-w-[120px]">
-                                  <span className="truncate">{player.name}</span>
-                                  {player.is_eliminated && (
-                                    <XCircle className="w-3 h-3 text-destructive flex-shrink-0" />
-                                  )}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{player.name}</p>
-                              </TooltipContent>
-                            </Tooltip>
+                            {player.name.length > NAME_TRUNCATE_THRESHOLD ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="flex items-center gap-2 max-w-[120px]">
+                                    <span className="truncate">{player.name}</span>
+                                    {player.is_eliminated && (
+                                      <XCircle className="w-3 h-3 text-destructive flex-shrink-0" />
+                                    )}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{player.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <span className="flex items-center gap-2 max-w-[120px]">
+                                <span className="truncate">{player.name}</span>
+                                {player.is_eliminated && (
+                                  <XCircle className="w-3 h-3 text-destructive flex-shrink-0" />
+                                )}
+                              </span>
+                            )}
                           </td>
                           <td className="text-center py-2 px-1 font-bold">{matchesPlayed}</td>
                           <td className="text-center py-2 px-1 text-green-500">{wins}</td>
@@ -156,8 +172,14 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
       {/* Group Matches */}
       <div className="space-y-4">
         <div className="space-y-1">
-          <h3 className="font-display text-2xl">Gruppekamper</h3>
-          <p className="text-sm text-muted-foreground">Trykk på en kamp for å starte</p>
+          <h3 className="font-display text-2xl">
+            {allGroupMatchesCompleted ? "Resultater fra alle gruppekamper" : "Gruppekamper"}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {allGroupMatchesCompleted 
+              ? "Trykk på kampen om noen resultater må endres" 
+              : "Trykk på en kamp for å starte"}
+          </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {groupNames.map(groupName => {
@@ -196,19 +218,28 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
                         )}
                       >
                         <div className="flex items-center justify-between text-sm gap-2">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className={cn(
-                                "truncate max-w-[100px]",
-                                match.winner_id === match.player1_id && "font-bold text-primary"
-                              )}>
-                                {player1?.name || "TBD"}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{player1?.name || "TBD"}</p>
-                            </TooltipContent>
-                          </Tooltip>
+                          {(player1?.name || "TBD").length > NAME_TRUNCATE_THRESHOLD ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className={cn(
+                                  "truncate max-w-[100px]",
+                                  match.winner_id === match.player1_id && "font-bold text-primary"
+                                )}>
+                                  {player1?.name || "TBD"}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{player1?.name || "TBD"}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className={cn(
+                              "truncate max-w-[100px]",
+                              match.winner_id === match.player1_id && "font-bold text-primary"
+                            )}>
+                              {player1?.name || "TBD"}
+                            </span>
+                          )}
                           {isCompleted ? (
                             <span className="font-bold flex-shrink-0">
                               {match.player1_sets} - {match.player2_sets}
@@ -216,19 +247,28 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
                           ) : (
                             <span className="text-muted-foreground flex-shrink-0">vs</span>
                           )}
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className={cn(
-                                "truncate max-w-[100px]",
-                                match.winner_id === match.player2_id && "font-bold text-primary"
-                              )}>
-                                {player2?.name || "TBD"}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{player2?.name || "TBD"}</p>
-                            </TooltipContent>
-                          </Tooltip>
+                          {(player2?.name || "TBD").length > NAME_TRUNCATE_THRESHOLD ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className={cn(
+                                  "truncate max-w-[100px]",
+                                  match.winner_id === match.player2_id && "font-bold text-primary"
+                                )}>
+                                  {player2?.name || "TBD"}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{player2?.name || "TBD"}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className={cn(
+                              "truncate max-w-[100px]",
+                              match.winner_id === match.player2_id && "font-bold text-primary"
+                            )}>
+                              {player2?.name || "TBD"}
+                            </span>
+                          )}
                         </div>
                         {isCompleted && match.winner_id && (
                           <div className="flex items-center justify-center gap-1 mt-1 text-xs text-accent">
