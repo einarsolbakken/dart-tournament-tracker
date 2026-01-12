@@ -5,11 +5,13 @@ import { Match, Player } from "@/hooks/useTournaments";
 import { Trophy, Undo2, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Create audio instance for 180 sound
+// Create video element for 180 sound (MP4 requires video element for reliable playback)
 const create180Audio = () => {
-  const audio = new Audio('/sounds/180.mp4');
-  audio.currentTime = 1; // Start from second 1
-  return audio;
+  const video = document.createElement('video');
+  video.src = '/sounds/180.mp4';
+  video.currentTime = 1; // Start from second 1
+  video.volume = 1.0;
+  return video;
 };
 interface MatchScoringProps {
   match: Match;
