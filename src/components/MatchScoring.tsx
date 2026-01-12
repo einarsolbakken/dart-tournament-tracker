@@ -176,13 +176,6 @@ export function MatchScoring({
     setCurrentThrows(newThrows);
     setRoundScore(roundScore + points);
 
-    // Check for 180 (3 triple 20s = 180 points after 3 throws)
-    const newRoundScore = roundScore + points;
-    if (newThrows.length === 3 && newRoundScore === 180) {
-      const audio = create180Audio();
-      audio.play().catch(err => console.log('Could not play 180 sound:', err));
-    }
-
     // Update score, darts, and total tracking
     if (currentPlayer === 1) {
       setPlayer1Score(newScore);
@@ -202,13 +195,35 @@ export function MatchScoring({
       return;
     }
 
+    // Check for 180 (3 triple 20s = 180 points after 3 throws)
+    const newRoundScore = roundScore + points;
+    const is180 = newThrows.length === 3 && newRoundScore === 180;
+
     // Auto-switch after 3 darts
     if (newThrows.length >= 3) {
       switchingPlayerRef.current = true;
-      setTimeout(() => {
-        switchPlayer();
-        switchingPlayerRef.current = false;
-      }, 500);
+      
+      if (is180) {
+        // Play 180 sound and wait for it to finish before switching
+        const audio = create180Audio();
+        audio.onended = () => {
+          switchPlayer();
+          switchingPlayerRef.current = false;
+        };
+        audio.play().catch(err => {
+          console.log('Could not play 180 sound:', err);
+          // Fallback: switch after short delay if audio fails
+          setTimeout(() => {
+            switchPlayer();
+            switchingPlayerRef.current = false;
+          }, 500);
+        });
+      } else {
+        setTimeout(() => {
+          switchPlayer();
+          switchingPlayerRef.current = false;
+        }, 500);
+      }
     }
   }, [currentThrows, currentPlayerScore, currentPlayer, roundScore, player1Darts, player2Darts, player1Score, player2Score, player1Sets, player2Sets, setNumber, requireDoubleOut, matchResult, history]);
 
