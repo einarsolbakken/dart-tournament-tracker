@@ -70,11 +70,20 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
           const groupPlayers = players
             .filter(p => p.group_name === groupName)
             .sort((a, b) => {
-              // Sort by points, then sets difference
+              // 1. Sort by points first
               if (b.group_points !== a.group_points) {
                 return b.group_points - a.group_points;
               }
-              return (b.group_sets_won - b.group_sets_lost) - (a.group_sets_won - a.group_sets_lost);
+              // 2. Then by sets difference
+              const aSetDiff = (a.group_sets_won || 0) - (a.group_sets_lost || 0);
+              const bSetDiff = (b.group_sets_won || 0) - (b.group_sets_lost || 0);
+              if (bSetDiff !== aSetDiff) {
+                return bSetDiff - aSetDiff;
+              }
+              // 3. Then by average (higher is better)
+              const aAvg = a.total_darts > 0 ? (a.total_score / a.total_darts) * 3 : 0;
+              const bAvg = b.total_darts > 0 ? (b.total_score / b.total_darts) * 3 : 0;
+              return bAvg - aAvg;
             });
           
           const groupMatches = matches.filter(m => m.group_name === groupName && m.stage === "group");
