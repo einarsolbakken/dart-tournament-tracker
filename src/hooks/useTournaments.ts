@@ -319,6 +319,23 @@ export function useUpdateGroupMatch() {
   });
 }
 
+// Helper function to calculate average per 3 darts
+function calculatePlayerAvg(totalScore: number, totalDarts: number): number {
+  if (totalDarts === 0) return 0;
+  return (totalScore / totalDarts) * 3;
+}
+
+// Find the valid knockout size (must be 2, 4, 8, or 16)
+function getValidKnockoutSize(playerCount: number): number {
+  const validSizes = [16, 8, 4, 2];
+  for (const size of validSizes) {
+    if (playerCount >= size) {
+      return size;
+    }
+  }
+  return 2; // Minimum is always 2
+}
+
 async function eliminateLastPlaceAndStartKnockout(tournamentId: string) {
   // Get all players grouped by group_name
   const { data: players } = await supabase
@@ -340,19 +357,29 @@ async function eliminateLastPlaceAndStartKnockout(tournamentId: string) {
   }
 
   // Sort all players across all groups by performance
+  // Tiebreaker order: 1. Points, 2. Set difference, 3. Average per 3 darts
   const allPlayersSorted = [...players]
     .filter(p => p.group_name)
     .sort((a, b) => {
-      // Sort by points first, then sets difference
+      // 1. Sort by points first
       if (b.group_points !== a.group_points) {
         return b.group_points - a.group_points;
       }
-      return (b.group_sets_won - b.group_sets_lost) - (a.group_sets_won - a.group_sets_lost);
+      // 2. Then by sets difference
+      const aSetDiff = (a.group_sets_won || 0) - (a.group_sets_lost || 0);
+      const bSetDiff = (b.group_sets_won || 0) - (b.group_sets_lost || 0);
+      if (bSetDiff !== aSetDiff) {
+        return bSetDiff - aSetDiff;
+      }
+      // 3. Then by average (higher is better)
+      const aAvg = calculatePlayerAvg(a.total_score || 0, a.total_darts || 0);
+      const bAvg = calculatePlayerAvg(b.total_score || 0, b.total_darts || 0);
+      return bAvg - aAvg;
     });
 
-  // Determine how many should advance (always 8 if > 8 players)
-  const totalPlayers = players.length;
-  const targetAdvancing = totalPlayers > 8 ? 8 : totalPlayers;
+  // Determine how many should advance (must be 16, 8, 4, or 2 - never anything else)
+  const totalPlayers = allPlayersSorted.length;
+  const targetAdvancing = getValidKnockoutSize(totalPlayers);
   
   // Take top performers
   const advancingPlayerIds = allPlayersSorted.slice(0, targetAdvancing).map(p => p.id);
@@ -375,11 +402,19 @@ async function eliminateLastPlaceAndStartKnockout(tournamentId: string) {
 
   if (!advancingPlayers || advancingPlayers.length < 2) return;
 
-  // Shuffle players for random matchups
-  const shuffled = [...advancingPlayers].sort(() => Math.random() - 0.5);
+  // Sort advancing players by their ranking to maintain seeding
+  const advancingPlayersSorted = [...advancingPlayers].sort((a, b) => {
+    const aIndex = advancingPlayerIds.indexOf(a.id);
+    const bIndex = advancingPlayerIds.indexOf(b.id);
+    return aIndex - bIndex;
+  });
 
   const bracket = generateBracket(
-    shuffled.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined }))
+    advancingPlayersSorted.map((p, index) => ({ 
+      id: p.id, 
+      name: p.name, 
+      seed: index + 1 // Use ranking from group stage as seed
+    }))
   );
 
   // Create knockout matches
