@@ -49,6 +49,10 @@ All colors MUST be HSL.
     --dart-cream: 45 20% 95%;
     --dart-dark: 220 20% 8%;
 
+    /* Glow effects */
+    --glow-primary: 0 0 20px hsl(145 60% 35% / 0.4);
+    --glow-accent: 0 0 20px hsl(45 90% 55% / 0.3);
+
     --sidebar-background: 220 18% 10%;
     --sidebar-foreground: 45 20% 95%;
     --sidebar-primary: 145 60% 35%;
@@ -67,5 +71,19 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .glow-primary {
+    box-shadow: var(--glow-primary);
+  }
+  
+  .glow-accent {
+    box-shadow: var(--glow-accent);
+  }
+  
+  .gradient-border {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
   }
 }
