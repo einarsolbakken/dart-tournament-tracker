@@ -176,6 +176,7 @@ const TournamentView = () => {
                 gameMode="301"
                 tournamentId={tournament.id}
                 onMatchClick={setSelectedMatch}
+                onEditMatch={setEditMatch}
               />
             ) : (
               <div className="text-center py-12 text-muted-foreground">

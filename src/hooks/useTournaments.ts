@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { generateBracket } from "@/lib/bracketGenerator";
 import { generateGroups, generateGroupMatches } from "@/lib/groupGenerator";
-import { generateLeagueMatches } from "@/lib/leagueGenerator";
+import { generateLeagueMatches, getDefaultMatchesPerPlayer } from "@/lib/leagueGenerator";
 
 export interface Tournament {
   id: string;
@@ -129,11 +129,13 @@ export function useCreateTournament() {
       date,
       playerNames,
       format = "group",
+      matchesPerPlayer,
     }: {
       name: string;
       date: string;
       playerNames: string[];
       format?: "group" | "league";
+      matchesPerPlayer?: number;
     }) => {
       // Determine the initial phase based on format
       const initialPhase = format === "league" ? "league" : "group_stage";
@@ -208,9 +210,11 @@ export function useCreateTournament() {
           .update({ group_name: "LEAGUE" })
           .eq("tournament_id", tournament.id);
 
-        // Generate round-robin matches for all players
+        // Generate league matches with configurable matches per player
+        const k = matchesPerPlayer ?? getDefaultMatchesPerPlayer(players.length);
         const leagueMatches = generateLeagueMatches(
-          players.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined }))
+          players.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined })),
+          k
         );
 
         const leagueMatchesToInsert = leagueMatches.map((match) => ({
