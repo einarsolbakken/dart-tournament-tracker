@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { format } from "date-fns";
+import { nb } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useCreateTournament } from "@/hooks/useTournaments";
-import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid, Zap, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid, Zap, ArrowLeft, CalendarIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { LoadingSpinner } from "./LoadingSpinner";
@@ -22,7 +26,7 @@ export function CreateTournamentForm() {
   const createTournament = useCreateTournament();
   
   const [name, setName] = useState("");
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState<Date>(new Date());
   const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
   const [isCreating, setIsCreating] = useState(false);
   const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>("group");
@@ -121,7 +125,7 @@ export function CreateTournamentForm() {
     try {
       const tournament = await createTournament.mutateAsync({
         name,
-        date,
+        date: format(date, "yyyy-MM-dd"),
         playerNames: validPlayers,
         format: tournamentFormat,
         matchesPerPlayer: tournamentFormat === "league" ? matchesPerPlayer : undefined,
@@ -197,18 +201,34 @@ export function CreateTournamentForm() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="date" className="text-sm font-medium flex items-center gap-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
                   <Zap className="w-3.5 h-3.5 text-primary" />
                   Dato
                 </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                  className="bg-muted/50 border-border/50 focus:border-primary focus:ring-primary/20 transition-all"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-muted/50 border-border/50 hover:bg-muted",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, "PPP", { locale: nb }) : <span>Velg dato</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={(d) => d && setDate(d)}
+                      initialFocus
+                      locale={nb}
+                      className="pointer-events-auto rounded-md border bg-popover"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
