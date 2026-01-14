@@ -4,7 +4,7 @@ import { useTournaments } from "@/hooks/useTournaments";
 import { TournamentCard } from "@/components/TournamentCard";
 import { Header } from "@/components/Header";
 import { Plus, Trophy, Target, History } from "lucide-react";
-import dartArenaLogo from "@/assets/dartarena-logo.png";
+import dartArenaLogo from "@/assets/dart-arena-logo.svg";
 
 const Index = () => {
   const { data: tournaments, isLoading } = useTournaments();
@@ -20,11 +20,8 @@ const Index = () => {
         {/* Hero Section */}
         <section className="text-center mb-12">
           <div className="flex justify-center mb-6">
-            <img src={dartArenaLogo} alt="DartArena" className="w-24 h-24" />
+            <img src={dartArenaLogo} alt="DartArena" className="h-32 w-auto" />
           </div>
-          <h1 className="font-display text-5xl md:text-6xl mb-4 tracking-tight">
-            DARTARENA
-          </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
             Opprett turneringer, følg brackets og registrer resultater i sanntid
           </p>
