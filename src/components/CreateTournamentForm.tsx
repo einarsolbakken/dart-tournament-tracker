@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCreateTournament } from "@/hooks/useTournaments";
-import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid, Sparkles, Zap } from "lucide-react";
+import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid, Zap, ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { LoadingSpinner } from "./LoadingSpinner";
@@ -150,15 +150,23 @@ export function CreateTournamentForm() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Compact header */}
-      <div className="flex items-center gap-4 mb-4">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-          <Target className="w-6 h-6 text-primary-foreground" />
+      {/* Header with back button */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
+            <Target className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl">Ny Turnering</h1>
+            <p className="text-muted-foreground text-sm">Opprett din neste dartkonkurranse</p>
+          </div>
         </div>
-        <div>
-          <h1 className="font-display text-2xl">Ny Turnering</h1>
-          <p className="text-muted-foreground text-sm">Opprett din neste dartkonkurranse</p>
-        </div>
+        <Link to="/">
+          <Button variant="outline" size="sm" className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Tilbake
+          </Button>
+        </Link>
       </div>
 
       <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl shadow-black/20">
@@ -444,7 +452,7 @@ export function CreateTournamentForm() {
                 
                 {leaguePreview.isValid && (
                   <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-accent" />
+                    <Trophy className="w-4 h-4 text-accent" />
                     De {leaguePreview.knockoutSize} beste går videre til sluttspill
                   </p>
                 )}
