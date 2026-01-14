@@ -153,13 +153,25 @@ export function MatchScoring({
       const newThrows = [...currentThrows, newThrow];
       setCurrentThrows(newThrows);
 
-      // Update darts count for the thrown dart
+      // Calculate how many darts were thrown this round (including this one)
+      // A bust means the round score is 0, but ALL 3 darts count for AVG
+      const dartsThisRound = newThrows.length;
+      const remainingDartsInRound = 3 - dartsThisRound;
+
+      // Update darts count - count ALL darts thrown AND fill up to 3 darts for the round
+      // Score for this round is 0 (bust annuls all points)
       if (currentPlayer === 1) {
         setPlayer1Darts(player1Darts + 1);
+        // Add total darts: the dart just thrown + remaining darts to complete the round
+        // Score stays 0 for bust (we don't add roundScore to total)
+        setPlayer1TotalDarts(player1TotalDarts + 1 + remainingDartsInRound);
         // Reset score to start of turn (annulerer hele runden)
         setPlayer1Score(startOfTurnScore);
       } else {
         setPlayer2Darts(player2Darts + 1);
+        // Add total darts: the dart just thrown + remaining darts to complete the round
+        // Score stays 0 for bust (we don't add roundScore to total)
+        setPlayer2TotalDarts(player2TotalDarts + 1 + remainingDartsInRound);
         // Reset score to start of turn (annulerer hele runden)
         setPlayer2Score(startOfTurnScore);
       }

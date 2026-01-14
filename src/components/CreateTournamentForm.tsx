@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCreateTournament } from "@/hooks/useTournaments";
 import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { generateGroups, calculateAdvancingPlayers } from "@/lib/groupGenerator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { calculateMatchesPerPlayer, getLeagueKnockoutSize, calculateTotalMatches } from "@/lib/leagueGenerator";
+import { getValidMatchesPerPlayerOptions, getDefaultMatchesPerPlayer, getLeagueKnockoutSize, validateLeagueConfig } from "@/lib/leagueGenerator";
 
 type TournamentFormat = "group" | "league";
 
@@ -24,6 +25,7 @@ export function CreateTournamentForm() {
   const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
   const [isCreating, setIsCreating] = useState(false);
   const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>("group");
+  const [matchesPerPlayer, setMatchesPerPlayer] = useState<number>(3);
 
   const addPlayer = () => {
     setPlayerNames([...playerNames, ""]);
@@ -62,11 +64,11 @@ export function CreateTournamentForm() {
   const getLeaguePreview = () => {
     if (tournamentFormat !== "league" || validPlayerCount < 2) return null;
     
-    const matchesPerPlayer = calculateMatchesPerPlayer(validPlayerCount);
-    const totalMatches = calculateTotalMatches(validPlayerCount);
+    const config = validateLeagueConfig(validPlayerCount, matchesPerPlayer);
     const knockoutSize = getLeagueKnockoutSize(validPlayerCount);
+    const validOptions = getValidMatchesPerPlayerOptions(validPlayerCount);
     
-    return { matchesPerPlayer, totalMatches, knockoutSize };
+    return { ...config, knockoutSize, validOptions };
   };
   
   const groupPreview = getGroupPreview();
@@ -95,6 +97,7 @@ export function CreateTournamentForm() {
         date,
         playerNames: validPlayers,
         format: tournamentFormat,
+        matchesPerPlayer: tournamentFormat === "league" ? matchesPerPlayer : undefined,
       });
       
       toast.success("Turnering opprettet!");
@@ -281,18 +284,35 @@ export function CreateTournamentForm() {
           {/* League preview - only for league format */}
           {leaguePreview && (
             <div className="space-y-3">
-              <h4 className="text-sm font-medium">Forhåndsvisning av liga:</h4>
-              <div className="flex flex-wrap gap-2">
-                <div className="bg-muted px-3 py-1.5 rounded-md text-sm">
-                  {leaguePreview.totalMatches} kamper totalt
-                </div>
-                <div className="bg-muted px-3 py-1.5 rounded-md text-sm">
-                  {leaguePreview.matchesPerPlayer} kamper per spiller
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                De {leaguePreview.knockoutSize} beste går videre til sluttspill
-              </p>
+              <h4 className="text-sm font-medium">Kamper per spiller:</h4>
+              <Select 
+                value={matchesPerPlayer.toString()} 
+                onValueChange={(v) => setMatchesPerPlayer(parseInt(v))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {leaguePreview.validOptions.map(opt => (
+                    <SelectItem key={opt} value={opt.toString()}>
+                      {opt} kamper per spiller ({(validPlayerCount * opt) / 2} totalt)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {!leaguePreview.isValid && (
+                <Alert variant="destructive" className="bg-destructive/10">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{leaguePreview.errorMessage}</AlertDescription>
+                </Alert>
+              )}
+              
+              {leaguePreview.isValid && (
+                <p className="text-sm text-muted-foreground">
+                  De {leaguePreview.knockoutSize} beste går videre til sluttspill
+                </p>
+              )}
             </div>
           )}
 

@@ -1,5 +1,7 @@
 import { Match, Player } from "@/hooks/useTournaments";
 import { MatchCard } from "./MatchCard";
+import { Button } from "@/components/ui/button";
+import { Edit2 } from "lucide-react";
 
 interface TournamentBracketProps {
   matches: Match[];
@@ -7,6 +9,7 @@ interface TournamentBracketProps {
   gameMode: string;
   tournamentId: string;
   onMatchClick: (match: Match) => void;
+  onEditMatch?: (match: Match) => void;
 }
 
 export function TournamentBracket({
@@ -15,6 +18,7 @@ export function TournamentBracket({
   gameMode,
   tournamentId,
   onMatchClick,
+  onEditMatch,
 }: TournamentBracketProps) {
   const getPlayerName = (playerId: string | null) => {
     if (!playerId) return "TBD";
@@ -44,13 +48,27 @@ export function TournamentBracket({
               style={{ minHeight: `${matchesByRound[1]?.length * 100}px` }}
             >
               {matchesByRound[round]?.map((match) => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  player1Name={getPlayerName(match.player1_id)}
-                  player2Name={getPlayerName(match.player2_id)}
-                  onClick={() => onMatchClick(match)}
-                />
+                <div key={match.id} className="relative group">
+                  <MatchCard
+                    match={match}
+                    player1Name={getPlayerName(match.player1_id)}
+                    player2Name={getPlayerName(match.player2_id)}
+                    onClick={() => onMatchClick(match)}
+                  />
+                  {match.winner_id && onEditMatch && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background border"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditMatch(match);
+                      }}
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
           </div>
