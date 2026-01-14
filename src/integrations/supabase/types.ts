@@ -174,6 +174,7 @@ export type Database = {
           id: string
           name: string
           status: string
+          tournament_format: string
         }
         Insert: {
           created_at?: string
@@ -183,6 +184,7 @@ export type Database = {
           id?: string
           name: string
           status?: string
+          tournament_format?: string
         }
         Update: {
           created_at?: string
@@ -192,6 +194,7 @@ export type Database = {
           id?: string
           name?: string
           status?: string
+          tournament_format?: string
         }
         Relationships: []
       }
