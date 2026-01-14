@@ -183,7 +183,7 @@ export function CreateTournamentForm() {
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Bjølsen Open"
+                  placeholder="F.eks. Fredagspils Open"
                   required
                   className="bg-muted/50 border-border/50 focus:border-primary focus:ring-primary/20 transition-all"
                 />

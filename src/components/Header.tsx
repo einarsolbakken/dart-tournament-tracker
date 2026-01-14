@@ -9,7 +9,7 @@ export function Header() {
           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
             <Target className="w-6 h-6 text-primary-foreground" />
           </div>
-          <span className="font-display text-2xl tracking-wide">DART TOURNAMENT</span>
+          <span className="font-display text-2xl tracking-wide">DARTARENA</span>
         </Link>
       </div>
     </header>
