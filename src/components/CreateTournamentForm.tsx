@@ -150,23 +150,26 @@ export function CreateTournamentForm() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header with back button */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Target className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-2xl">Ny Turnering</h1>
-            <p className="text-muted-foreground text-sm">Opprett din neste dartkonkurranse</p>
-          </div>
-        </div>
-        <Link to="/">
+      {/* Header with back button on left, title centered */}
+      <div className="relative flex items-center justify-center mb-6">
+        {/* Back button - absolute left */}
+        <Link to="/" className="absolute left-0">
           <Button variant="outline" size="sm" className="gap-2">
             <ArrowLeft className="w-4 h-4" />
             Tilbake
           </Button>
         </Link>
+        
+        {/* Centered title */}
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
+            <Target className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <div className="text-center">
+            <h1 className="font-display text-2xl">Ny Turnering</h1>
+            <p className="text-muted-foreground text-sm">Opprett din neste dartkonkurranse</p>
+          </div>
+        </div>
       </div>
 
       <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl shadow-black/20">
