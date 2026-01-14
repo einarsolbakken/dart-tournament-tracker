@@ -45,6 +45,12 @@ export function EditMatchDialog({ match, players, tournamentId, onClose }: EditM
       const player1Sets = winnerId === match.player1_id ? parseInt(winnerSets) : parseInt(loserSets);
       const player2Sets = winnerId === match.player2_id ? parseInt(winnerSets) : parseInt(loserSets);
 
+      // Store old match data for stats recalculation
+      const oldWinnerId = match.winner_id;
+      const oldPlayer1Sets = match.player1_sets;
+      const oldPlayer2Sets = match.player2_sets;
+
+      // Update the match
       await supabase
         .from("matches")
         .update({
@@ -54,6 +60,11 @@ export function EditMatchDialog({ match, players, tournamentId, onClose }: EditM
         })
         .eq("id", match.id);
 
+      // Recalculate stats for affected players if this is a group/league match
+      if (match.stage === "group" || match.stage === "league") {
+        await recalculatePlayerStats(tournamentId, match.player1_id, match.player2_id);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["matches", tournamentId] });
       queryClient.invalidateQueries({ queryKey: ["players", tournamentId] });
       toast.success("Kampresultat oppdatert");
@@ -62,6 +73,61 @@ export function EditMatchDialog({ match, players, tournamentId, onClose }: EditM
       toast.error("Kunne ikke oppdatere kamp");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Recalculate stats for players based on all their completed matches
+  const recalculatePlayerStats = async (
+    tournamentId: string, 
+    player1Id: string | null, 
+    player2Id: string | null
+  ) => {
+    const playerIds = [player1Id, player2Id].filter(Boolean) as string[];
+    
+    for (const playerId of playerIds) {
+      // Get all completed matches for this player in group/league stage
+      const { data: playerMatches } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("tournament_id", tournamentId)
+        .in("stage", ["group", "league"])
+        .eq("status", "completed")
+        .or(`player1_id.eq.${playerId},player2_id.eq.${playerId}`);
+
+      if (!playerMatches) continue;
+
+      // Calculate stats from all matches
+      let points = 0;
+      let setsWon = 0;
+      let setsLost = 0;
+      let totalDarts = 0;
+      let totalScore = 0;
+
+      for (const m of playerMatches) {
+        const isPlayer1 = m.player1_id === playerId;
+        const isWinner = m.winner_id === playerId;
+        
+        if (isWinner) {
+          points += 2;
+        }
+        
+        setsWon += isPlayer1 ? (m.player1_sets || 0) : (m.player2_sets || 0);
+        setsLost += isPlayer1 ? (m.player2_sets || 0) : (m.player1_sets || 0);
+        totalDarts += isPlayer1 ? (m.player1_darts || 0) : (m.player2_darts || 0);
+        totalScore += isPlayer1 ? (m.player1_total_score || 0) : (m.player2_total_score || 0);
+      }
+
+      // Update player stats
+      await supabase
+        .from("players")
+        .update({
+          group_points: points,
+          group_sets_won: setsWon,
+          group_sets_lost: setsLost,
+          total_darts: totalDarts,
+          total_score: totalScore,
+        })
+        .eq("id", playerId);
     }
   };
 
