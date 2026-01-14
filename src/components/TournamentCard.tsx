@@ -60,12 +60,13 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
         <Link to={`/tournament/${tournament.id}`}>
           <CardContent className="p-5">
             <div className="flex items-start justify-between mb-3">
-              <h3 className="font-display text-xl group-hover:text-primary transition-colors pr-8">
+              <h3 className="font-display text-xl group-hover:text-primary transition-colors pr-16">
                 {tournament.name}
               </h3>
               <Badge
                 variant={status.variant}
                 className={cn(
+                  "mr-8",
                   tournament.status === "completed" && "bg-accent/20 text-accent border-accent/50"
                 )}
               >
