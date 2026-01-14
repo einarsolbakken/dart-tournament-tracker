@@ -150,19 +150,15 @@ export function CreateTournamentForm() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Decorative header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/60 mb-4 shadow-lg shadow-primary/30">
-          <Target className="w-10 h-10 text-primary-foreground" />
+      {/* Compact header */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
+          <Target className="w-6 h-6 text-primary-foreground" />
         </div>
-        <h1 className="font-display text-4xl mb-2 bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text">
-          Ny Turnering
-        </h1>
-        <p className="text-muted-foreground flex items-center justify-center gap-2">
-          <Sparkles className="w-4 h-4 text-accent" />
-          Opprett din neste dartkonkurranse
-          <Sparkles className="w-4 h-4 text-accent" />
-        </p>
+        <div>
+          <h1 className="font-display text-2xl">Ny Turnering</h1>
+          <p className="text-muted-foreground text-sm">Opprett din neste dartkonkurranse</p>
+        </div>
       </div>
 
       <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl shadow-black/20">
@@ -170,8 +166,8 @@ export function CreateTournamentForm() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent pointer-events-none" />
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
         
-        <CardContent className="pt-8 pb-8 relative">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <CardContent className="pt-6 pb-6 relative">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Tournament details */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
