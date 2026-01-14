@@ -23,7 +23,7 @@ const Index = () => {
             <span className="text-sm font-medium">Dart Tournament Manager</span>
           </div>
           <h1 className="font-display text-5xl md:text-6xl mb-4 tracking-tight">
-            BJØLSEN OPEN
+            DARTARENA
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
             Opprett turneringer, følg brackets og registrer resultater i sanntid
