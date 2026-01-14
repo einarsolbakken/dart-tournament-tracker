@@ -3,12 +3,9 @@ import { useTournaments } from "@/hooks/useTournaments";
 import { Header } from "@/components/Header";
 import { Plus, Target, History, ChevronRight } from "lucide-react";
 import dartArenaLogo from "@/assets/dart-arena-logo.svg";
-import { useRef, useState, useEffect } from "react";
 
 const Index = () => {
   const { data: tournaments } = useTournaments();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
 
   const activeTournaments = tournaments?.filter((t) => t.status !== "completed") || [];
   const completedTournaments = tournaments?.filter((t) => t.status === "completed") || [];
@@ -16,20 +13,20 @@ const Index = () => {
   const cards = [
     {
       title: "Ny Turnering",
-      description: "Opprett en ny dartturnering og inviter spillere",
+      description: "Opprett en ny dartturnering",
       icon: Plus,
       to: "/create",
-      bgClass: "bg-gradient-to-br from-primary/30 via-primary/10 to-background",
-      iconBg: "bg-primary/20",
+      bgClass: "from-primary/40 via-primary/20 to-background",
+      iconBg: "bg-primary/30",
       iconColor: "text-primary",
     },
     {
-      title: "Aktive Turneringer",
+      title: "Aktive",
       description: `${activeTournaments.length} pågående`,
       icon: Target,
       to: "/active",
-      bgClass: "bg-gradient-to-br from-accent/30 via-accent/10 to-background",
-      iconBg: "bg-accent/20",
+      bgClass: "from-accent/40 via-accent/20 to-background",
+      iconBg: "bg-accent/30",
       iconColor: "text-accent",
     },
     {
@@ -37,146 +34,80 @@ const Index = () => {
       description: `${completedTournaments.length} fullførte`,
       icon: History,
       to: "/history",
-      bgClass: "bg-gradient-to-br from-muted via-muted/50 to-background",
-      iconBg: "bg-muted",
+      bgClass: "from-muted via-muted/60 to-background",
+      iconBg: "bg-foreground/10",
       iconColor: "text-foreground",
     },
   ];
 
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const scrollLeft = container.scrollLeft;
-      const maxScroll = container.scrollWidth - container.clientWidth;
-      setScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const getCardTransform = (index: number) => {
-    const cardProgress = scrollProgress * (cards.length - 1);
-    const diff = index - cardProgress;
-    
-    // Parallax: cards behind move slower
-    const translateX = diff * 20;
-    const scale = 1 - Math.abs(diff) * 0.08;
-    const opacity = 1 - Math.abs(diff) * 0.3;
-    const rotateY = diff * -5;
-    
-    return {
-      transform: `translateX(${translateX}px) scale(${Math.max(scale, 0.85)}) perspective(1000px) rotateY(${rotateY}deg)`,
-      opacity: Math.max(opacity, 0.4),
-      zIndex: cards.length - Math.abs(Math.round(diff)),
-    };
-  };
-
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
       {/* Hero with Logo */}
-      <div className="flex justify-center pt-6 pb-4 px-4">
-        <img src={dartArenaLogo} alt="DartArena" className="h-28 md:h-36 w-auto" />
+      <div className="flex justify-center pt-6 pb-2 px-4">
+        <img src={dartArenaLogo} alt="DartArena" className="h-24 md:h-32 w-auto" />
       </div>
 
-      <p className="text-muted-foreground text-center px-4 mb-6">
-        Opprett turneringer og følg resultater i sanntid
+      <p className="text-muted-foreground text-center text-sm px-4 mb-4">
+        Turneringer og resultater i sanntid
       </p>
 
-      {/* Cards Carousel */}
-      <div className="flex-1 relative px-4">
-        <div
-          ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-8 scroll-smooth"
-          style={{
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-            WebkitOverflowScrolling: "touch",
-          }}
-        >
-          {/* Spacer for centering first card */}
-          <div className="flex-shrink-0 w-[8vw]" />
-          
-          {cards.map((card, index) => {
-            const transforms = getCardTransform(index);
-            
-            return (
-              <Link
-                key={index}
-                to={card.to}
-                className="snap-center flex-shrink-0 transition-all duration-500 ease-out"
-                style={{
-                  width: "75vw",
-                  maxWidth: "320px",
-                  ...transforms,
-                }}
+      {/* Stacked Cards */}
+      <div className="flex-1 relative px-6 pb-8">
+        <div className="relative h-[55vh] max-h-[450px]">
+          {cards.map((card, index) => (
+            <Link
+              key={index}
+              to={card.to}
+              className="absolute inset-x-0 block transition-all duration-500 ease-out hover:translate-y-[-8px]"
+              style={{
+                top: `${index * 28}px`,
+                zIndex: cards.length - index,
+                transform: `scale(${1 - index * 0.03})`,
+              }}
+            >
+              <div
+                className={`
+                  h-[280px] md:h-[320px] rounded-2xl overflow-hidden
+                  bg-gradient-to-br ${card.bgClass}
+                  border border-border/60
+                  shadow-2xl
+                  transition-all duration-300
+                  hover:shadow-primary/20 hover:border-primary/40
+                `}
               >
-                <div
-                  className={`
-                    relative h-[45vh] max-h-[380px] rounded-2xl overflow-hidden
-                    ${card.bgClass}
-                    border border-border/50
-                    shadow-xl hover:shadow-2xl
-                    transition-shadow duration-300
-                  `}
-                >
-                  {/* Card Content */}
-                  <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                    {/* Top Section */}
-                    <div>
-                      <div className={`w-12 h-12 rounded-xl ${card.iconBg} flex items-center justify-center mb-4`}>
-                        <card.icon className={`w-6 h-6 ${card.iconColor}`} />
-                      </div>
-                      <h2 className="font-display text-2xl md:text-3xl mb-2">{card.title}</h2>
-                      <p className="text-muted-foreground">{card.description}</p>
+                {/* Card Content */}
+                <div className="h-full p-6 flex flex-col justify-between">
+                  {/* Top Section */}
+                  <div>
+                    <div className={`w-14 h-14 rounded-xl ${card.iconBg} flex items-center justify-center mb-4 backdrop-blur-sm`}>
+                      <card.icon className={`w-7 h-7 ${card.iconColor}`} />
                     </div>
-
-                    {/* Bottom Section */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-primary font-medium flex items-center gap-1">
-                        {card.to === "/create" ? "Start" : "Se alle"}
-                        <ChevronRight className="w-4 h-4" />
-                      </span>
-                      
-                      {/* Card number */}
-                      <span className="text-muted-foreground/30 font-display text-5xl">
-                        0{index + 1}
-                      </span>
-                    </div>
+                    <h2 className="font-display text-2xl md:text-3xl mb-2">{card.title}</h2>
+                    <p className="text-muted-foreground">{card.description}</p>
                   </div>
 
-                  {/* Decorative blur */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-primary/20 to-transparent rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                  {/* Bottom Section */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-primary font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+                      {card.to === "/create" ? "Start" : "Se alle"}
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </div>
                 </div>
-              </Link>
-            );
-          })}
-          
-          {/* Spacer for centering last card */}
-          <div className="flex-shrink-0 w-[8vw]" />
+
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-radial from-primary/10 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+              </div>
+            </Link>
+          ))}
         </div>
 
-        {/* Scroll Indicators */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
-          {cards.map((_, index) => {
-            const cardProgress = scrollProgress * (cards.length - 1);
-            const isActive = Math.abs(index - cardProgress) < 0.5;
-            
-            return (
-              <div
-                key={index}
-                className={`
-                  h-1.5 rounded-full transition-all duration-300
-                  ${isActive ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30"}
-                `}
-              />
-            );
-          })}
-        </div>
+        {/* Hint text */}
+        <p className="text-center text-muted-foreground/60 text-xs mt-4">
+          Trykk på et kort for å fortsette
+        </p>
       </div>
     </div>
   );
