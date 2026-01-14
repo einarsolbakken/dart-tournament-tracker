@@ -5,6 +5,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CreateTournament from "./pages/CreateTournament";
 import TournamentView from "./pages/TournamentView";
+import ActiveTournaments from "./pages/ActiveTournaments";
+import TournamentHistory from "./pages/TournamentHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +22,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/create" element={<CreateTournament />} />
+          <Route path="/active" element={<ActiveTournaments />} />
+          <Route path="/history" element={<TournamentHistory />} />
           <Route path="/tournament/:id" element={<TournamentView />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
