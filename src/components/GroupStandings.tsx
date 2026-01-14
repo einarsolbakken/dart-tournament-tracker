@@ -226,12 +226,12 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
                           canPlay && "hover:border-primary cursor-pointer"
                         )}
                       >
-                        <div className="flex items-center justify-between text-sm gap-2">
+                        <div className="flex items-center text-sm gap-2">
                           {(player1?.name || "TBD").length > NAME_TRUNCATE_THRESHOLD ? (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <span className={cn(
-                                  "truncate max-w-[100px]",
+                                  "truncate flex-1 text-left",
                                   match.winner_id === match.player1_id && "font-bold text-primary"
                                 )}>
                                   {player1?.name || "TBD"}
@@ -243,24 +243,36 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
                             </Tooltip>
                           ) : (
                             <span className={cn(
-                              "truncate max-w-[100px]",
+                              "truncate flex-1 text-left",
                               match.winner_id === match.player1_id && "font-bold text-primary"
                             )}>
                               {player1?.name || "TBD"}
                             </span>
                           )}
-                          {isCompleted ? (
-                            <span className="font-bold flex-shrink-0">
-                              {match.player1_sets} - {match.player2_sets}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground flex-shrink-0">vs</span>
-                          )}
+                          
+                          <div className="flex flex-col items-center shrink-0">
+                            {isCompleted ? (
+                              <span className="font-bold">
+                                {match.player1_sets} - {match.player2_sets}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">vs</span>
+                            )}
+                            {isCompleted && match.winner_id && (
+                              <div className="flex items-center gap-1 text-xs text-accent">
+                                <Trophy className="w-3 h-3" />
+                                <span className="truncate max-w-[80px]">
+                                  {players.find(p => p.id === match.winner_id)?.name}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
                           {(player2?.name || "TBD").length > NAME_TRUNCATE_THRESHOLD ? (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <span className={cn(
-                                  "truncate max-w-[100px]",
+                                  "truncate flex-1 text-right",
                                   match.winner_id === match.player2_id && "font-bold text-primary"
                                 )}>
                                   {player2?.name || "TBD"}
@@ -272,19 +284,13 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
                             </Tooltip>
                           ) : (
                             <span className={cn(
-                              "truncate max-w-[100px]",
+                              "truncate flex-1 text-right",
                               match.winner_id === match.player2_id && "font-bold text-primary"
                             )}>
                               {player2?.name || "TBD"}
                             </span>
                           )}
                         </div>
-                        {isCompleted && match.winner_id && (
-                          <div className="flex items-center justify-center gap-1 mt-1 text-xs text-accent">
-                            <Trophy className="w-3 h-3" />
-                            {players.find(p => p.id === match.winner_id)?.name}
-                          </div>
-                        )}
                         {isCompleted && (player1MatchAvg !== "-" || player2MatchAvg !== "-") && (
                           <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                             <span>Avg: {player1MatchAvg}</span>
