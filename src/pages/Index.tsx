@@ -41,9 +41,9 @@ const Index = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      {/* Hero with Logo */}
-      <div className="flex justify-center pt-12 pb-8 px-4">
-        <img src={dartArenaLogo} alt="DartArena" className="h-40 md:h-52 w-auto" />
+      {/* Hero with Logo - centered above cards */}
+      <div className="flex justify-center pt-8 px-4">
+        <img src={dartArenaLogo} alt="DartArena" className="h-48 md:h-64 w-auto" />
       </div>
 
       {/* Centered Card Carousel */}
