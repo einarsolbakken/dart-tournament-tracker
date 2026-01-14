@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useTournaments } from "@/hooks/useTournaments";
 import { AppLayout } from "@/components/AppLayout";
 import { Plus, Target, History, ChevronRight } from "lucide-react";
-import dartArenaLogo from "@/assets/dart-arena-logo.svg";
+import dartArenaLogo from "@/assets/dart-arena-logo-new.svg";
 import { useState } from "react";
 
 const Index = () => {
