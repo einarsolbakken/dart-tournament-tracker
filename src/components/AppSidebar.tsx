@@ -1,6 +1,11 @@
-import { Home, Plus, Target, History, Menu, X } from "lucide-react";
+import { Home, Plus, Target, History, Menu, ChevronLeft } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import dartArenaLogo from "@/assets/dart-arena-logo.svg";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import {
   Sidebar,
@@ -27,42 +32,64 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`border-r border-border bg-card/95 backdrop-blur-sm transition-all duration-300 ${isCollapsed ? "w-16" : "w-60"}`}
+      className={`border-r border-border/50 bg-card transition-all duration-300 ease-in-out ${isCollapsed ? "w-[72px]" : "w-64"}`}
       collapsible="icon"
     >
-      <SidebarHeader className="p-3 border-b border-border">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
-            <NavLink to="/" className="flex items-center gap-2">
-              <img src={dartArenaLogo} alt="DartArena" className="h-8 w-auto" />
-            </NavLink>
+      {/* Header */}
+      <SidebarHeader className={`h-16 flex items-center border-b border-border/50 ${isCollapsed ? "justify-center px-0" : "justify-between px-4"}`}>
+        {!isCollapsed && (
+          <NavLink to="/" className="flex items-center">
+            <img src={dartArenaLogo} alt="DartArena" className="h-9 w-auto" />
+          </NavLink>
+        )}
+        <button
+          onClick={toggleSidebar}
+          className={`flex items-center justify-center w-10 h-10 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground ${isCollapsed ? "" : ""}`}
+          aria-label={isCollapsed ? "Åpne meny" : "Lukk meny"}
+        >
+          {isCollapsed ? (
+            <Menu className="h-5 w-5" />
+          ) : (
+            <ChevronLeft className="h-5 w-5" />
           )}
-          <button
-            onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
-            aria-label={isCollapsed ? "Åpne meny" : "Lukk meny"}
-          >
-            {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
-          </button>
-        </div>
+        </button>
       </SidebarHeader>
 
-      <SidebarContent className="p-2">
+      {/* Navigation */}
+      <SidebarContent className={`py-4 ${isCollapsed ? "px-3" : "px-3"}`}>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      end={item.url === "/"}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors ${isCollapsed ? "justify-center" : ""}`}
-                      activeClassName="bg-primary/10 text-primary font-medium"
-                    >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
+                    {isCollapsed ? (
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <NavLink 
+                            to={item.url} 
+                            end={item.url === "/"}
+                            className="flex items-center justify-center w-full h-11 rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                            activeClassName="bg-primary/15 text-primary"
+                          >
+                            <item.icon className="h-5 w-5" />
+                          </NavLink>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" sideOffset={10}>
+                          {item.title}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <NavLink 
+                        to={item.url} 
+                        end={item.url === "/"}
+                        className="flex items-center gap-3 w-full h-11 px-3 rounded-xl text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                        activeClassName="bg-primary/15 text-primary font-medium"
+                      >
+                        <item.icon className="h-5 w-5 flex-shrink-0" />
+                        <span className="text-sm">{item.title}</span>
+                      </NavLink>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
