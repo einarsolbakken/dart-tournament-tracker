@@ -7,7 +7,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, showSidebar = true }: AppLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (!showSidebar) {
     return <>{children}</>;
