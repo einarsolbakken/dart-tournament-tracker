@@ -47,7 +47,7 @@ const Index = () => {
         <img src={dartArenaLogo} alt="DartArena" className="h-48 md:h-64 w-auto mb-4" />
 
         {/* Cards Container */}
-        <div className="relative flex justify-center items-center min-h-[450px] w-full">
+        <div className="relative min-h-[450px] w-full overflow-hidden">
           {cards.map((card, index) => {
             const offset = index - activeCard;
             return (
@@ -60,9 +60,9 @@ const Index = () => {
                     setActiveCard(index);
                   }
                 }}
-                className="absolute transition-all duration-500 ease-out cursor-pointer"
+                className="absolute left-1/2 top-1/2 transition-all duration-500 ease-out cursor-pointer"
                 style={{
-                  transform: `translateX(${offset * 280}px) scale(${offset === 0 ? 1 : 0.85})`,
+                  transform: `translate(-50%, -50%) translateX(${offset * 280}px) scale(${offset === 0 ? 1 : 0.85})`,
                   zIndex: offset === 0 ? 30 : 20 - Math.abs(offset),
                   opacity: offset === 0 ? 1 : 0.5,
                 }}
