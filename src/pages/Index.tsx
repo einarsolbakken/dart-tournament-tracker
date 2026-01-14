@@ -16,59 +16,33 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-6">
-        {/* Compact Hero */}
-        <section className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 py-4">
-          <div className="flex items-center gap-6">
-            <img src={dartArenaLogo} alt="DartArena" className="h-20 md:h-24 w-auto" />
-            <div className="hidden md:block">
-              <p className="text-muted-foreground text-sm max-w-xs">
-                Opprett turneringer, følg brackets og registrer resultater i sanntid
-              </p>
-            </div>
+      <main className="container mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <section className="text-center mb-12">
+          <div className="flex justify-center mb-8">
+            <img src={dartArenaLogo} alt="DartArena" className="h-48 md:h-64 w-auto" />
           </div>
+          <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
+            Opprett turneringer, følg brackets og registrer resultater i sanntid
+          </p>
           <Link to="/create">
-            <Button size="lg" className="shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
+            <Button size="lg" className="text-lg px-8">
               <Plus className="w-5 h-5 mr-2" />
               Ny Turnering
             </Button>
           </Link>
         </section>
 
-        {/* Quick Stats Bar - shows when there are tournaments */}
-        {tournaments && tournaments.length > 0 && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-card/50 border border-border/50 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-primary">{activeTournaments.length}</div>
-              <div className="text-xs text-muted-foreground">Aktive</div>
-            </div>
-            <div className="bg-card/50 border border-border/50 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-accent">{completedTournaments.length}</div>
-              <div className="text-xs text-muted-foreground">Fullførte</div>
-            </div>
-            <div className="bg-card/50 border border-border/50 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold">{tournaments.length}</div>
-              <div className="text-xs text-muted-foreground">Totalt</div>
-            </div>
-          </div>
-        )}
-
         {/* Active Tournaments */}
         {activeTournaments.length > 0 && (
-          <section className="mb-6">
-            <h2 className="font-display text-lg mb-3 flex items-center gap-2">
-              <Target className="w-5 h-5 text-primary" />
+          <section className="mb-12">
+            <h2 className="font-display text-2xl mb-4 flex items-center gap-2">
+              <Target className="w-6 h-6 text-primary" />
               Aktive Turneringer
             </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {activeTournaments.map((tournament, index) => (
-                <div 
-                  key={tournament.id} 
-                  className="animate-in fade-in slide-in-from-bottom-2"
-                  style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'backwards' }}
-                >
-                  <TournamentCard tournament={tournament} />
-                </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {activeTournaments.map((tournament) => (
+                <TournamentCard key={tournament.id} tournament={tournament} />
               ))}
             </div>
           </section>
@@ -77,32 +51,26 @@ const Index = () => {
         {/* Tournament History */}
         {completedTournaments.length > 0 && (
           <section>
-            <h2 className="font-display text-lg mb-3 flex items-center gap-2">
-              <History className="w-5 h-5 text-accent" />
+            <h2 className="font-display text-2xl mb-4 flex items-center gap-2">
+              <History className="w-6 h-6 text-accent" />
               Turneringshistorikk
             </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {completedTournaments.map((tournament, index) => (
-                <div 
-                  key={tournament.id}
-                  className="animate-in fade-in slide-in-from-bottom-2"
-                  style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'backwards' }}
-                >
-                  <TournamentCard tournament={tournament} />
-                </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {completedTournaments.map((tournament) => (
+                <TournamentCard key={tournament.id} tournament={tournament} />
               ))}
             </div>
           </section>
         )}
 
-        {/* Empty State - More compact */}
+        {/* Empty State */}
         {!isLoading && tournaments?.length === 0 && (
-          <div className="text-center py-12 bg-card/30 rounded-xl border border-border/50">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <Trophy className="w-8 h-8 text-muted-foreground" />
+          <div className="text-center py-16">
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <Trophy className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="font-display text-xl mb-2">Ingen turneringer ennå</h3>
-            <p className="text-muted-foreground text-sm mb-4">
+            <h3 className="font-display text-2xl mb-2">Ingen turneringer ennå</h3>
+            <p className="text-muted-foreground mb-6">
               Opprett din første turnering for å komme i gang
             </p>
             <Link to="/create">
@@ -115,8 +83,8 @@ const Index = () => {
         )}
 
         {isLoading && (
-          <div className="text-center py-12">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="text-center py-16">
+            <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           </div>
         )}
       </main>
