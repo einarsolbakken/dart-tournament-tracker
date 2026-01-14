@@ -8,7 +8,7 @@ import { useRef, useState, useEffect } from "react";
 const Index = () => {
   const { data: tournaments } = useTournaments();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const activeTournaments = tournaments?.filter((t) => t.status !== "completed") || [];
   const completedTournaments = tournaments?.filter((t) => t.status === "completed") || [];
@@ -25,7 +25,7 @@ const Index = () => {
     },
     {
       title: "Aktive Turneringer",
-      description: `${activeTournaments.length} pågående turneringer`,
+      description: `${activeTournaments.length} pågående`,
       icon: Target,
       to: "/active",
       bgClass: "bg-gradient-to-br from-accent/30 via-accent/10 to-background",
@@ -34,7 +34,7 @@ const Index = () => {
     },
     {
       title: "Historikk",
-      description: `${completedTournaments.length} fullførte turneringer`,
+      description: `${completedTournaments.length} fullførte`,
       icon: History,
       to: "/history",
       bgClass: "bg-gradient-to-br from-muted via-muted/50 to-background",
@@ -49,103 +49,133 @@ const Index = () => {
 
     const handleScroll = () => {
       const scrollLeft = container.scrollLeft;
-      const cardWidth = container.offsetWidth * 0.85;
-      const newIndex = Math.round(scrollLeft / (cardWidth - 40));
-      setActiveIndex(Math.min(newIndex, cards.length - 1));
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      setScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
     };
 
-    container.addEventListener("scroll", handleScroll);
+    container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [cards.length]);
+  }, []);
+
+  const getCardTransform = (index: number) => {
+    const cardProgress = scrollProgress * (cards.length - 1);
+    const diff = index - cardProgress;
+    
+    // Parallax: cards behind move slower
+    const translateX = diff * 20;
+    const scale = 1 - Math.abs(diff) * 0.08;
+    const opacity = 1 - Math.abs(diff) * 0.3;
+    const rotateY = diff * -5;
+    
+    return {
+      transform: `translateX(${translateX}px) scale(${Math.max(scale, 0.85)}) perspective(1000px) rotateY(${rotateY}deg)`,
+      opacity: Math.max(opacity, 0.4),
+      zIndex: cards.length - Math.abs(Math.round(diff)),
+    };
+  };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
       <Header />
       
       {/* Hero with Logo */}
-      <div className="flex justify-center pt-8 pb-4 px-4">
-        <img src={dartArenaLogo} alt="DartArena" className="h-32 md:h-40 w-auto" />
+      <div className="flex justify-center pt-6 pb-4 px-4">
+        <img src={dartArenaLogo} alt="DartArena" className="h-28 md:h-36 w-auto" />
       </div>
 
-      {/* Full-screen Cards Carousel */}
-      <div className="flex-1 relative">
+      <p className="text-muted-foreground text-center px-4 mb-6">
+        Opprett turneringer og følg resultater i sanntid
+      </p>
+
+      {/* Cards Carousel */}
+      <div className="flex-1 relative px-4">
         <div
           ref={scrollContainerRef}
-          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full pb-8"
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-8 scroll-smooth"
           style={{
             scrollbarWidth: "none",
             msOverflowStyle: "none",
+            WebkitOverflowScrolling: "touch",
           }}
         >
-          {cards.map((card, index) => (
-            <Link
-              key={index}
-              to={card.to}
-              className="snap-center flex-shrink-0 first:pl-4 last:pr-4"
-              style={{
-                width: "85vw",
-                marginRight: index < cards.length - 1 ? "-40px" : "0",
-              }}
-            >
-              <div
-                className={`
-                  relative h-[60vh] md:h-[50vh] rounded-3xl overflow-hidden
-                  ${card.bgClass}
-                  border border-border/50
-                  shadow-2xl
-                  transition-all duration-500
-                  hover:scale-[1.02] hover:shadow-primary/20
-                  ${activeIndex === index ? "scale-100 opacity-100" : "scale-95 opacity-70"}
-                `}
+          {/* Spacer for centering first card */}
+          <div className="flex-shrink-0 w-[8vw]" />
+          
+          {cards.map((card, index) => {
+            const transforms = getCardTransform(index);
+            
+            return (
+              <Link
+                key={index}
+                to={card.to}
+                className="snap-center flex-shrink-0 transition-all duration-500 ease-out"
                 style={{
-                  transform: `translateX(${index * 10}px)`,
-                  zIndex: cards.length - index,
+                  width: "75vw",
+                  maxWidth: "320px",
+                  ...transforms,
                 }}
               >
-                {/* Card Content */}
-                <div className="absolute inset-0 p-8 flex flex-col justify-between">
-                  {/* Top Section */}
-                  <div>
-                    <div className={`w-16 h-16 rounded-2xl ${card.iconBg} flex items-center justify-center mb-6`}>
-                      <card.icon className={`w-8 h-8 ${card.iconColor}`} />
+                <div
+                  className={`
+                    relative h-[45vh] max-h-[380px] rounded-2xl overflow-hidden
+                    ${card.bgClass}
+                    border border-border/50
+                    shadow-xl hover:shadow-2xl
+                    transition-shadow duration-300
+                  `}
+                >
+                  {/* Card Content */}
+                  <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                    {/* Top Section */}
+                    <div>
+                      <div className={`w-12 h-12 rounded-xl ${card.iconBg} flex items-center justify-center mb-4`}>
+                        <card.icon className={`w-6 h-6 ${card.iconColor}`} />
+                      </div>
+                      <h2 className="font-display text-2xl md:text-3xl mb-2">{card.title}</h2>
+                      <p className="text-muted-foreground">{card.description}</p>
                     </div>
-                    <h2 className="font-display text-3xl md:text-4xl mb-3">{card.title}</h2>
-                    <p className="text-muted-foreground text-lg">{card.description}</p>
+
+                    {/* Bottom Section */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-primary font-medium flex items-center gap-1">
+                        {card.to === "/create" ? "Start" : "Se alle"}
+                        <ChevronRight className="w-4 h-4" />
+                      </span>
+                      
+                      {/* Card number */}
+                      <span className="text-muted-foreground/30 font-display text-5xl">
+                        0{index + 1}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Bottom Section */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-primary font-medium flex items-center gap-2 text-lg">
-                      {card.to === "/create" ? "Kom i gang" : "Se alle"}
-                      <ChevronRight className="w-5 h-5" />
-                    </span>
-                    
-                    {/* Card number indicator */}
-                    <span className="text-muted-foreground/50 font-display text-6xl md:text-8xl">
-                      0{index + 1}
-                    </span>
-                  </div>
+                  {/* Decorative blur */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-primary/20 to-transparent rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
                 </div>
-
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-radial from-primary/10 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-radial from-accent/10 to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
+          
+          {/* Spacer for centering last card */}
+          <div className="flex-shrink-0 w-[8vw]" />
         </div>
 
         {/* Scroll Indicators */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-          {cards.map((_, index) => (
-            <div
-              key={index}
-              className={`
-                h-2 rounded-full transition-all duration-300
-                ${activeIndex === index ? "w-8 bg-primary" : "w-2 bg-muted-foreground/30"}
-              `}
-            />
-          ))}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+          {cards.map((_, index) => {
+            const cardProgress = scrollProgress * (cards.length - 1);
+            const isActive = Math.abs(index - cardProgress) < 0.5;
+            
+            return (
+              <div
+                key={index}
+                className={`
+                  h-1.5 rounded-full transition-all duration-300
+                  ${isActive ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30"}
+                `}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
