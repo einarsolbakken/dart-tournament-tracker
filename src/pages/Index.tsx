@@ -7,12 +7,19 @@ import { useState } from "react";
 
 const Index = () => {
   const { data: tournaments } = useTournaments();
-  const [activeCard, setActiveCard] = useState(0);
+  const [activeCard, setActiveCard] = useState(1); // Start with "Ny Turnering" in center
 
   const activeTournaments = tournaments?.filter((t) => t.status !== "completed") || [];
   const completedTournaments = tournaments?.filter((t) => t.status === "completed") || [];
 
   const cards = [
+    {
+      title: "Historikk",
+      description: `${completedTournaments.length} fullførte`,
+      icon: History,
+      to: "/history",
+      gradient: "from-slate-600/80 to-slate-900/90",
+    },
     {
       title: "Ny Turnering",
       description: "Opprett en ny dartturnering",
@@ -26,13 +33,6 @@ const Index = () => {
       icon: Target,
       to: "/active",
       gradient: "from-amber-600/80 to-amber-900/90",
-    },
-    {
-      title: "Historikk",
-      description: `${completedTournaments.length} fullførte`,
-      icon: History,
-      to: "/history",
-      gradient: "from-slate-600/80 to-slate-900/90",
     },
   ];
 
