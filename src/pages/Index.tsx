@@ -4,6 +4,7 @@ import { useTournaments } from "@/hooks/useTournaments";
 import { TournamentCard } from "@/components/TournamentCard";
 import { Header } from "@/components/Header";
 import { Plus, Trophy, Target, History } from "lucide-react";
+import dartArenaLogo from "@/assets/dartarena-logo.png";
 
 const Index = () => {
   const { data: tournaments, isLoading } = useTournaments();
@@ -18,9 +19,8 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Hero Section */}
         <section className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/20 rounded-full text-primary mb-4">
-            <Target className="w-4 h-4" />
-            <span className="text-sm font-medium">Dart Tournament Manager</span>
+          <div className="flex justify-center mb-6">
+            <img src={dartArenaLogo} alt="DartArena" className="w-24 h-24" />
           </div>
           <h1 className="font-display text-5xl md:text-6xl mb-4 tracking-tight">
             DARTARENA
