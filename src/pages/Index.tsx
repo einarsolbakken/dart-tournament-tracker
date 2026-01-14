@@ -19,8 +19,8 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Hero Section */}
         <section className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <img src={dartArenaLogo} alt="DartArena" className="h-32 w-auto" />
+          <div className="flex justify-center mb-8">
+            <img src={dartArenaLogo} alt="DartArena" className="h-48 md:h-64 w-auto" />
           </div>
           <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
             Opprett turneringer, følg brackets og registrer resultater i sanntid
