@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import { useTournaments } from "@/hooks/useTournaments";
 import { AppLayout } from "@/components/AppLayout";
-import { Plus, Target, History, ChevronRight } from "lucide-react";
+import { Plus, Target, History, ChevronRight, Circle } from "lucide-react";
 import dartArenaLogo from "@/assets/dart-arena-logo-new.svg";
 import { useState } from "react";
 
 const Index = () => {
   const { data: tournaments } = useTournaments();
-  const [activeCard, setActiveCard] = useState(1); // Start with "Ny Turnering" in center
+  const [activeCard, setActiveCard] = useState(2); // Start with "Ny Turnering" in center
 
   const activeTournaments = tournaments?.filter((t) => t.status !== "completed") || [];
   const completedTournaments = tournaments?.filter((t) => t.status === "completed") || [];
@@ -19,6 +19,15 @@ const Index = () => {
       icon: History,
       to: "/history",
       gradient: "from-slate-600/80 to-slate-900/90",
+      cta: "Se alle",
+    },
+    {
+      title: "Bull Off",
+      description: "1v1 bull-duell",
+      icon: Circle,
+      to: "/bull-off",
+      gradient: "from-red-600/80 to-red-900/90",
+      cta: "Spill",
     },
     {
       title: "Ny Turnering",
@@ -26,6 +35,7 @@ const Index = () => {
       icon: Plus,
       to: "/create",
       gradient: "from-emerald-600/80 to-emerald-900/90",
+      cta: "Start",
     },
     {
       title: "Aktive",
@@ -33,6 +43,7 @@ const Index = () => {
       icon: Target,
       to: "/active",
       gradient: "from-amber-600/80 to-amber-900/90",
+      cta: "Se alle",
     },
   ];
 
@@ -90,7 +101,7 @@ const Index = () => {
                         <p className="text-white/70 text-lg mb-6">{card.description}</p>
                         
                         <span className="inline-flex items-center gap-2 text-white font-medium text-lg">
-                          {card.to === "/create" ? "Start" : "Se alle"}
+                          {card.cta}
                           <ChevronRight className="w-5 h-5" />
                         </span>
                       </div>
