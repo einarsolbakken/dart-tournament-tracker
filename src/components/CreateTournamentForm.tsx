@@ -21,8 +21,8 @@ export function CreateTournamentForm() {
   const navigate = useNavigate();
   const createTournament = useCreateTournament();
   
-  const [name, setName] = useState("Bjølsen Open");
-  const [date, setDate] = useState("2025-01-31");
+  const [name, setName] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
   const [isCreating, setIsCreating] = useState(false);
   const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>("group");
