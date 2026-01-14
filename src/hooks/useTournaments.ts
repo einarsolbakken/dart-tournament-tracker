@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { generateBracket } from "@/lib/bracketGenerator";
 import { generateGroups, generateGroupMatches } from "@/lib/groupGenerator";
+import { generateLeagueMatches } from "@/lib/leagueGenerator";
 
 export interface Tournament {
   id: string;
@@ -10,6 +11,7 @@ export interface Tournament {
   game_mode: string;
   status: string;
   current_phase: string;
+  tournament_format: string;
   created_at: string;
 }
 
@@ -126,19 +128,25 @@ export function useCreateTournament() {
       name,
       date,
       playerNames,
+      format = "group",
     }: {
       name: string;
       date: string;
       playerNames: string[];
+      format?: "group" | "league";
     }) => {
-      // Create tournament with 301 game mode and group stage
+      // Determine the initial phase based on format
+      const initialPhase = format === "league" ? "league" : "group_stage";
+      
+      // Create tournament with 301 game mode
       const { data: tournament, error: tournamentError } = await supabase
         .from("tournaments")
         .insert({ 
           name, 
           date, 
           game_mode: "301",
-          current_phase: "group_stage"
+          current_phase: initialPhase,
+          tournament_format: format,
         })
         .select()
         .single();
@@ -159,38 +167,69 @@ export function useCreateTournament() {
 
       if (playersError) throw playersError;
 
-      // Generate groups
-      const groups = generateGroups(
-        players.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined }))
-      );
+      if (format === "group") {
+        // Generate groups for group format
+        const groups = generateGroups(
+          players.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined }))
+        );
 
-      // Update players with group assignments
-      for (const group of groups) {
+        // Update players with group assignments
+        for (const group of groups) {
+          await supabase
+            .from("players")
+            .update({ group_name: group.name })
+            .in("id", group.playerIds);
+        }
+
+        // Generate group matches
+        const groupMatches = generateGroupMatches(groups);
+        
+        const groupMatchesToInsert = groupMatches.map((match, index) => ({
+          tournament_id: tournament.id,
+          round: 0, // Round 0 for group stage
+          match_number: index + 1,
+          player1_id: match.player1Id,
+          player2_id: match.player2Id,
+          stage: "group",
+          group_name: match.groupName,
+          sets_to_win: 2, // First to 2 sets in group stage
+        }));
+
+        const { error: matchesError } = await supabase
+          .from("matches")
+          .insert(groupMatchesToInsert);
+
+        if (matchesError) throw matchesError;
+      } else {
+        // League format: all players in one "league" (no groups)
+        // Update all players with group_name "LEAGUE" for identification
         await supabase
           .from("players")
-          .update({ group_name: group.name })
-          .in("id", group.playerIds);
+          .update({ group_name: "LEAGUE" })
+          .eq("tournament_id", tournament.id);
+
+        // Generate round-robin matches for all players
+        const leagueMatches = generateLeagueMatches(
+          players.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined }))
+        );
+
+        const leagueMatchesToInsert = leagueMatches.map((match) => ({
+          tournament_id: tournament.id,
+          round: 0, // Round 0 for league stage
+          match_number: match.matchNumber,
+          player1_id: match.player1Id,
+          player2_id: match.player2Id,
+          stage: "league",
+          group_name: "LEAGUE",
+          sets_to_win: 2, // First to 2 sets in league stage
+        }));
+
+        const { error: matchesError } = await supabase
+          .from("matches")
+          .insert(leagueMatchesToInsert);
+
+        if (matchesError) throw matchesError;
       }
-
-      // Generate group matches
-      const groupMatches = generateGroupMatches(groups);
-      
-      const groupMatchesToInsert = groupMatches.map((match, index) => ({
-        tournament_id: tournament.id,
-        round: 0, // Round 0 for group stage
-        match_number: index + 1,
-        player1_id: match.player1Id,
-        player2_id: match.player2Id,
-        stage: "group",
-        group_name: match.groupName,
-        sets_to_win: 2, // First to 2 sets in group stage
-      }));
-
-      const { error: matchesError } = await supabase
-        .from("matches")
-        .insert(groupMatchesToInsert);
-
-      if (matchesError) throw matchesError;
 
       return tournament;
     },
@@ -295,18 +334,20 @@ export function useUpdateGroupMatch() {
           .eq("id", loserId);
       }
 
-      // Check if group stage is complete
-      const { data: allGroupMatches } = await supabase
+      // Check if group/league stage is complete
+      const { data: allStageMatches } = await supabase
         .from("matches")
         .select("*")
         .eq("tournament_id", tournamentId)
-        .eq("stage", "group");
+        .in("stage", ["group", "league"]);
 
-      const allCompleted = allGroupMatches?.every(m => m.status === "completed");
+      const allCompleted = allStageMatches?.every(m => m.status === "completed");
 
-      if (allCompleted) {
-        // Eliminate last place in each group and start knockout
-        await eliminateLastPlaceAndStartKnockout(tournamentId);
+      if (allCompleted && allStageMatches && allStageMatches.length > 0) {
+        // Check which stage type it is
+        const isLeague = allStageMatches[0].stage === "league";
+        // Eliminate players and start knockout
+        await eliminateAndStartKnockout(tournamentId, isLeague);
       }
 
       return match;
@@ -336,7 +377,7 @@ function getValidKnockoutSize(playerCount: number): number {
   return 2; // Minimum is always 2
 }
 
-async function eliminateLastPlaceAndStartKnockout(tournamentId: string) {
+async function eliminateAndStartKnockout(tournamentId: string, isLeague: boolean) {
   // Get all players grouped by group_name
   const { data: players } = await supabase
     .from("players")

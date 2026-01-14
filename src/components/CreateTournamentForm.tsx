@@ -5,11 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCreateTournament } from "@/hooks/useTournaments";
-import { Plus, Trash2, Target, Users, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { generateGroups, calculateAdvancingPlayers } from "@/lib/groupGenerator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { calculateMatchesPerPlayer, getLeagueKnockoutSize, calculateTotalMatches } from "@/lib/leagueGenerator";
+
+type TournamentFormat = "group" | "league";
 
 export function CreateTournamentForm() {
   const navigate = useNavigate();
@@ -19,6 +23,7 @@ export function CreateTournamentForm() {
   const [date, setDate] = useState("2025-01-31");
   const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
   const [isCreating, setIsCreating] = useState(false);
+  const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>("group");
 
   const addPlayer = () => {
     setPlayerNames([...playerNames, ""]);
@@ -38,9 +43,9 @@ export function CreateTournamentForm() {
 
   const validPlayerCount = playerNames.filter((n) => n.trim()).length;
   
-  // Calculate group info for preview
+  // Calculate group info for preview (only for group format)
   const getGroupPreview = () => {
-    if (validPlayerCount < 3) return null;
+    if (tournamentFormat !== "group" || validPlayerCount < 3) return null;
     
     const testPlayers = playerNames
       .filter(n => n.trim())
@@ -52,15 +57,33 @@ export function CreateTournamentForm() {
     
     return { groups, advancing, isEven };
   };
+
+  // Calculate league info for preview (only for league format)
+  const getLeaguePreview = () => {
+    if (tournamentFormat !== "league" || validPlayerCount < 2) return null;
+    
+    const matchesPerPlayer = calculateMatchesPerPlayer(validPlayerCount);
+    const totalMatches = calculateTotalMatches(validPlayerCount);
+    const knockoutSize = getLeagueKnockoutSize(validPlayerCount);
+    
+    return { matchesPerPlayer, totalMatches, knockoutSize };
+  };
   
-  const preview = getGroupPreview();
+  const groupPreview = getGroupPreview();
+  const leaguePreview = getLeaguePreview();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const validPlayers = playerNames.filter((n) => n.trim());
-    if (validPlayers.length < 3) {
+    
+    if (tournamentFormat === "group" && validPlayers.length < 3) {
       toast.error("Du trenger minst 3 spillere for gruppespill");
+      return;
+    }
+    
+    if (tournamentFormat === "league" && validPlayers.length < 2) {
+      toast.error("Du trenger minst 2 spillere for ligasystem");
       return;
     }
 
@@ -71,6 +94,7 @@ export function CreateTournamentForm() {
         name,
         date,
         playerNames: validPlayers,
+        format: tournamentFormat,
       });
       
       toast.success("Turnering opprettet!");
@@ -125,17 +149,70 @@ export function CreateTournamentForm() {
             </div>
           </div>
 
-          {/* Tournament format info */}
+          {/* Tournament format selection */}
+          <div className="space-y-4">
+            <Label>Turneringsformat</Label>
+            <RadioGroup 
+              value={tournamentFormat} 
+              onValueChange={(value) => setTournamentFormat(value as TournamentFormat)}
+              className="grid grid-cols-2 gap-4"
+            >
+              <div className="relative">
+                <RadioGroupItem 
+                  value="group" 
+                  id="format-group" 
+                  className="peer sr-only" 
+                />
+                <Label 
+                  htmlFor="format-group" 
+                  className="flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10"
+                >
+                  <LayoutGrid className="w-8 h-8 mb-2 text-primary" />
+                  <span className="font-medium">Gruppespill</span>
+                  <span className="text-xs text-muted-foreground text-center mt-1">
+                    Tradisjonelle grupper → sluttspill
+                  </span>
+                </Label>
+              </div>
+              <div className="relative">
+                <RadioGroupItem 
+                  value="league" 
+                  id="format-league" 
+                  className="peer sr-only" 
+                />
+                <Label 
+                  htmlFor="format-league" 
+                  className="flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10"
+                >
+                  <Trophy className="w-8 h-8 mb-2 text-primary" />
+                  <span className="font-medium">Ligasystem</span>
+                  <span className="text-xs text-muted-foreground text-center mt-1">
+                    Alle spiller like mange kamper
+                  </span>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Format info */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
             <h4 className="font-medium flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Turneringsformat
+              {tournamentFormat === "group" ? "Gruppespill format" : "Ligasystem format"}
             </h4>
-            <ul className="space-y-1 text-muted-foreground">
-              <li>• <strong>Gruppespill:</strong> 301, single checkout, first to 2 sets</li>
-              <li>• <strong>Sluttspill:</strong> 301, dobbel checkout, first to 3 sets</li>
-              <li>• Maks 4 spillere per gruppe, sistemann ryker</li>
-            </ul>
+            {tournamentFormat === "group" ? (
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• <strong>Gruppespill:</strong> 301, single checkout, first to 2 sets</li>
+                <li>• <strong>Sluttspill:</strong> 301, dobbel checkout, first to 3 sets</li>
+                <li>• Maks 4 spillere per gruppe, de beste går videre</li>
+              </ul>
+            ) : (
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• <strong>Ligakamper:</strong> 301, single checkout, first to 2 sets</li>
+                <li>• <strong>Sluttspill:</strong> 301, dobbel checkout, first to 3 sets</li>
+                <li>• Alle spiller mot alle, beste 16/8/4/2 går videre</li>
+              </ul>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -176,21 +253,21 @@ export function CreateTournamentForm() {
             </div>
           </div>
 
-          {/* Group preview */}
-          {preview && (
+          {/* Group preview - only for group format */}
+          {groupPreview && (
             <div className="space-y-3">
               <h4 className="text-sm font-medium">Forhåndsvisning av grupper:</h4>
               <div className="flex flex-wrap gap-2">
-                {preview.groups.map(group => (
+                {groupPreview.groups.map(group => (
                   <div key={group.name} className="bg-muted px-3 py-1.5 rounded-md text-sm">
                     Gruppe {group.name}: {group.playerIds.length} spillere
                   </div>
                 ))}
               </div>
               <p className="text-sm text-muted-foreground">
-                {preview.advancing} spillere går videre til sluttspill
+                {groupPreview.advancing} spillere går videre til sluttspill
               </p>
-              {!preview.isEven && (
+              {!groupPreview.isEven && (
                 <Alert variant="destructive" className="bg-destructive/10">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
@@ -198,6 +275,24 @@ export function CreateTournamentForm() {
                   </AlertDescription>
                 </Alert>
               )}
+            </div>
+          )}
+
+          {/* League preview - only for league format */}
+          {leaguePreview && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">Forhåndsvisning av liga:</h4>
+              <div className="flex flex-wrap gap-2">
+                <div className="bg-muted px-3 py-1.5 rounded-md text-sm">
+                  {leaguePreview.totalMatches} kamper totalt
+                </div>
+                <div className="bg-muted px-3 py-1.5 rounded-md text-sm">
+                  {leaguePreview.matchesPerPlayer} kamper per spiller
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                De {leaguePreview.knockoutSize} beste går videre til sluttspill
+              </p>
             </div>
           )}
 

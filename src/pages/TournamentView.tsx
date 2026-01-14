@@ -3,13 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { TournamentBracket } from "@/components/TournamentBracket";
 import { GroupStandings } from "@/components/GroupStandings";
+import { LeagueStandings } from "@/components/LeagueStandings";
 import { ScoreDialog } from "@/components/ScoreDialog";
 import { EditMatchDialog } from "@/components/EditMatchDialog";
 import { useTournament, usePlayers, useMatches, Match } from "@/hooks/useTournaments";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Target, Trophy, Users, Swords } from "lucide-react";
+import { ArrowLeft, Calendar, Target, Trophy, Users, Swords, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 
@@ -48,8 +49,12 @@ const TournamentView = () => {
   }
 
   const groupMatches = matches?.filter(m => m.stage === "group") || [];
+  const leagueMatches = matches?.filter(m => m.stage === "league") || [];
   const knockoutMatches = matches?.filter(m => m.stage === "knockout") || [];
+  
+  const isLeagueFormat = tournament.tournament_format === "league";
   const isGroupStage = tournament.current_phase === "group_stage";
+  const isLeagueStage = tournament.current_phase === "league";
   const isKnockoutStage = tournament.current_phase === "knockout" || tournament.current_phase === "completed";
 
   // Find winner if tournament is completed
@@ -63,6 +68,7 @@ const TournamentView = () => {
   const getPhaseLabel = () => {
     switch (tournament.current_phase) {
       case "group_stage": return "Gruppespill";
+      case "league": return "Ligaspill";
       case "knockout": return "Sluttspill";
       case "completed": return "Fullført";
       default: return tournament.current_phase;
@@ -119,12 +125,21 @@ const TournamentView = () => {
         )}
 
         {/* Tournament Tabs */}
-        <Tabs defaultValue={isKnockoutStage ? "knockout" : "groups"} className="space-y-6">
+        <Tabs defaultValue={isKnockoutStage ? "knockout" : "stage"} className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="groups" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Gruppespill
-              {isGroupStage && <Badge variant="secondary" className="ml-1">Pågår</Badge>}
+            <TabsTrigger value="stage" className="flex items-center gap-2">
+              {isLeagueFormat ? (
+                <>
+                  <Trophy className="w-4 h-4" />
+                  Ligaspill
+                </>
+              ) : (
+                <>
+                  <LayoutGrid className="w-4 h-4" />
+                  Gruppespill
+                </>
+              )}
+              {(isGroupStage || isLeagueStage) && <Badge variant="secondary" className="ml-1">Pågår</Badge>}
             </TabsTrigger>
             <TabsTrigger value="knockout" className="flex items-center gap-2" disabled={!isKnockoutStage}>
               <Swords className="w-4 h-4" />
@@ -135,15 +150,22 @@ const TournamentView = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="groups">
-            {players && (
+          <TabsContent value="stage">
+            {players && isLeagueFormat ? (
+              <LeagueStandings
+                players={players as any}
+                matches={leagueMatches as any}
+                onMatchClick={(match) => setSelectedMatch(match as any)}
+                onEditMatch={(match) => setEditMatch(match as any)}
+              />
+            ) : players ? (
               <GroupStandings
                 players={players as any}
                 matches={groupMatches as any}
                 onMatchClick={(match) => setSelectedMatch(match as any)}
                 onEditMatch={(match) => setEditMatch(match as any)}
               />
-            )}
+            ) : null}
           </TabsContent>
 
           <TabsContent value="knockout">
@@ -158,7 +180,7 @@ const TournamentView = () => {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <Swords className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Sluttspillet starter når gruppespillet er ferdig</p>
+                <p>Sluttspillet starter når {isLeagueFormat ? "ligaspillet" : "gruppespillet"} er ferdig</p>
               </div>
             )}
           </TabsContent>
