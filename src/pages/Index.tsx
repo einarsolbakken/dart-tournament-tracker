@@ -59,7 +59,19 @@ const Index = () => {
           {/* Cards Container */}
           <div className="relative min-h-[450px] w-full overflow-hidden">
             {cards.map((card, index) => {
-              const offset = index - activeCard;
+              // Calculate circular offset
+              const totalCards = cards.length;
+              let offset = index - activeCard;
+              
+              // Wrap around for circular navigation
+              if (offset > totalCards / 2) offset -= totalCards;
+              if (offset < -totalCards / 2) offset += totalCards;
+              
+              // Only show 3 cards: current (-1, 0, +1)
+              const isVisible = Math.abs(offset) <= 1;
+              
+              if (!isVisible) return null;
+              
               return (
                 <Link
                   key={index}
@@ -73,7 +85,7 @@ const Index = () => {
                   className="absolute left-1/2 top-1/2 transition-all duration-500 ease-out cursor-pointer"
                   style={{
                     transform: `translate(-50%, -50%) translateX(${offset * 280}px) scale(${offset === 0 ? 1 : 0.85})`,
-                    zIndex: offset === 0 ? 30 : 20 - Math.abs(offset),
+                    zIndex: offset === 0 ? 30 : 20,
                     opacity: offset === 0 ? 1 : 0.5,
                   }}
                 >
