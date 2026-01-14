@@ -213,7 +213,7 @@ export function CreateTournamentForm() {
               <ul className="space-y-1 text-muted-foreground">
                 <li>• <strong>Ligakamper:</strong> 301, single checkout, first to 2 sets</li>
                 <li>• <strong>Sluttspill:</strong> 301, dobbel checkout, first to 3 sets</li>
-                <li>• Alle spiller mot alle, beste 16/8/4/2 går videre</li>
+                <li>• Alle spiller like mange kamper, beste 16/8/4/2 går videre</li>
               </ul>
             )}
           </div>
