@@ -45,6 +45,26 @@ export function CreateTournamentForm() {
 
   const validPlayerCount = playerNames.filter((n) => n.trim()).length;
   
+  // Check for duplicate names (case-insensitive, trimmed)
+  const getDuplicateNames = (): Set<string> => {
+    const trimmedNames = playerNames
+      .map(n => n.trim().toLowerCase())
+      .filter(n => n.length > 0);
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+    
+    for (const name of trimmedNames) {
+      if (seen.has(name)) {
+        duplicates.add(name);
+      }
+      seen.add(name);
+    }
+    return duplicates;
+  };
+  
+  const duplicateNames = getDuplicateNames();
+  const hasDuplicates = duplicateNames.size > 0;
+  
   // Calculate group info for preview (only for group format)
   const getGroupPreview = () => {
     if (tournamentFormat !== "group" || validPlayerCount < 3) return null;
@@ -78,6 +98,12 @@ export function CreateTournamentForm() {
     e.preventDefault();
     
     const validPlayers = playerNames.filter((n) => n.trim());
+    
+    // Check for duplicates
+    if (hasDuplicates) {
+      toast.error("Spillere kan ikke ha samme navn");
+      return;
+    }
     
     if (tournamentFormat === "group" && validPlayers.length < 3) {
       toast.error("Du trenger minst 3 spillere for gruppespill");
@@ -239,7 +265,11 @@ export function CreateTournamentForm() {
                     value={playerName}
                     onChange={(e) => updatePlayerName(index, e.target.value)}
                     placeholder={`Spiller ${index + 1}`}
-                    className="flex-1"
+                    className={`flex-1 ${
+                      playerName.trim() && duplicateNames.has(playerName.trim().toLowerCase()) 
+                        ? "border-destructive focus-visible:ring-destructive" 
+                        : ""
+                    }`}
                   />
                   <Button
                     type="button"
@@ -254,6 +284,15 @@ export function CreateTournamentForm() {
                 </div>
               ))}
             </div>
+            
+            {hasDuplicates && (
+              <Alert variant="destructive" className="bg-destructive/10">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Spillere kan ikke ha samme navn. Vennligst gi unike navn til alle spillere.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           {/* Group preview - only for group format */}
@@ -320,7 +359,7 @@ export function CreateTournamentForm() {
             type="submit"
             size="lg"
             className="w-full"
-            disabled={createTournament.isPending || validPlayerCount < 3}
+            disabled={createTournament.isPending || validPlayerCount < 3 || hasDuplicates}
           >
             {createTournament.isPending ? "Oppretter..." : "Start Turnering"}
           </Button>
