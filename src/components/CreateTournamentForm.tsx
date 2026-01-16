@@ -167,23 +167,23 @@ export function CreateTournamentForm() {
   return (
     <div className="max-w-2xl mx-auto">
       {/* Header with back button on left, title centered */}
-      <div className="relative flex items-center justify-center mb-6">
+      <div className="relative flex items-center justify-center mb-6 px-4">
         {/* Back button - absolute left */}
         <Link to="/" className="absolute left-0">
           <Button variant="outline" size="sm" className="gap-2">
             <ArrowLeft className="w-4 h-4" />
-            Tilbake
+            <span className="hidden sm:inline">Tilbake</span>
           </Button>
         </Link>
         
         {/* Centered title */}
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Target className="w-6 h-6 text-primary-foreground" />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
+            <Target className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
           </div>
           <div className="text-center">
-            <h1 className="font-display text-2xl">Ny Turnering</h1>
-            <p className="text-muted-foreground text-sm">Opprett din neste dartkonkurranse</p>
+            <h1 className="font-display text-xl sm:text-2xl">Ny Turnering</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm hidden sm:block">Opprett din neste dartkonkurranse</p>
           </div>
         </div>
       </div>
@@ -350,7 +350,7 @@ export function CreateTournamentForm() {
                 <Label className="text-sm font-medium">
                   {tournamentFormat === "group" ? "Gruppespill" : "Ligakamper"}
                 </Label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Sets for å vinne</Label>
                     <Select value={String(groupSetsToWin)} onValueChange={(v) => setGroupSetsToWin(Number(v))}>
@@ -372,7 +372,7 @@ export function CreateTournamentForm() {
                         variant={groupCheckoutType === "single" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setGroupCheckoutType("single")}
-                        className="flex-1"
+                        className="flex-1 min-w-0"
                       >
                         Single
                       </Button>
@@ -381,7 +381,7 @@ export function CreateTournamentForm() {
                         variant={groupCheckoutType === "double" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setGroupCheckoutType("double")}
-                        className="flex-1"
+                        className="flex-1 min-w-0"
                       >
                         Dobbel
                       </Button>
@@ -393,7 +393,7 @@ export function CreateTournamentForm() {
               {/* Knockout Stage Rules */}
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Sluttspill</Label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Sets for å vinne</Label>
                     <Select value={String(knockoutSetsToWin)} onValueChange={(v) => setKnockoutSetsToWin(Number(v))}>
@@ -415,7 +415,7 @@ export function CreateTournamentForm() {
                         variant={knockoutCheckoutType === "single" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setKnockoutCheckoutType("single")}
-                        className="flex-1"
+                        className="flex-1 min-w-0"
                       >
                         Single
                       </Button>
@@ -424,7 +424,7 @@ export function CreateTournamentForm() {
                         variant={knockoutCheckoutType === "double" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setKnockoutCheckoutType("double")}
-                        className="flex-1"
+                        className="flex-1 min-w-0"
                       >
                         Dobbel
                       </Button>
@@ -435,11 +435,14 @@ export function CreateTournamentForm() {
 
               {/* Rules Summary */}
               <div className="pt-2 border-t border-border/30">
-                <p className="text-xs text-muted-foreground">
-                  <strong className="text-foreground">{tournamentFormat === "group" ? "Gruppespill" : "Liga"}:</strong> {gameMode}, {groupCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {groupSetsToWin} sets
-                  <span className="mx-2">•</span>
-                  <strong className="text-foreground">Sluttspill:</strong> {gameMode}, {knockoutCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {knockoutSetsToWin} sets
-                </p>
+                <div className="text-xs text-muted-foreground space-y-1 sm:space-y-0">
+                  <p>
+                    <strong className="text-foreground">{tournamentFormat === "group" ? "Gruppespill" : "Liga"}:</strong> {gameMode}, {groupCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {groupSetsToWin} sets
+                  </p>
+                  <p>
+                    <strong className="text-foreground">Sluttspill:</strong> {gameMode}, {knockoutCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {knockoutSetsToWin} sets
+                  </p>
+                </div>
               </div>
             </div>
 
