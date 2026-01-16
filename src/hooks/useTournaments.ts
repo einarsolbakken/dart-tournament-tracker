@@ -12,6 +12,10 @@ export interface Tournament {
   status: string;
   current_phase: string;
   tournament_format: string;
+  group_sets_to_win: number;
+  knockout_sets_to_win: number;
+  group_checkout_type: string;
+  knockout_checkout_type: string;
   created_at: string;
 }
 
@@ -130,25 +134,39 @@ export function useCreateTournament() {
       playerNames,
       format = "group",
       matchesPerPlayer,
+      gameMode = "301",
+      groupSetsToWin = 2,
+      knockoutSetsToWin = 3,
+      groupCheckoutType = "single",
+      knockoutCheckoutType = "double",
     }: {
       name: string;
       date: string;
       playerNames: string[];
       format?: "group" | "league";
       matchesPerPlayer?: number;
+      gameMode?: string;
+      groupSetsToWin?: number;
+      knockoutSetsToWin?: number;
+      groupCheckoutType?: string;
+      knockoutCheckoutType?: string;
     }) => {
       // Determine the initial phase based on format
       const initialPhase = format === "league" ? "league" : "group_stage";
       
-      // Create tournament with 301 game mode
+      // Create tournament with custom game settings
       const { data: tournament, error: tournamentError } = await supabase
         .from("tournaments")
         .insert({ 
           name, 
           date, 
-          game_mode: "301",
+          game_mode: gameMode,
           current_phase: initialPhase,
           tournament_format: format,
+          group_sets_to_win: groupSetsToWin,
+          knockout_sets_to_win: knockoutSetsToWin,
+          group_checkout_type: groupCheckoutType,
+          knockout_checkout_type: knockoutCheckoutType,
         })
         .select()
         .single();
@@ -194,7 +212,7 @@ export function useCreateTournament() {
           player2_id: match.player2Id,
           stage: "group",
           group_name: match.groupName,
-          sets_to_win: 2, // First to 2 sets in group stage
+          sets_to_win: groupSetsToWin,
         }));
 
         const { error: matchesError } = await supabase
@@ -225,7 +243,7 @@ export function useCreateTournament() {
           player2_id: match.player2Id,
           stage: "league",
           group_name: "LEAGUE",
-          sets_to_win: 2, // First to 2 sets in league stage
+          sets_to_win: groupSetsToWin,
         }));
 
         const { error: matchesError } = await supabase
@@ -382,6 +400,15 @@ function getValidKnockoutSize(playerCount: number): number {
 }
 
 async function eliminateAndStartKnockout(tournamentId: string, isLeague: boolean) {
+  // Get tournament settings
+  const { data: tournament } = await supabase
+    .from("tournaments")
+    .select("knockout_sets_to_win")
+    .eq("id", tournamentId)
+    .single();
+
+  const knockoutSetsToWin = tournament?.knockout_sets_to_win ?? 3;
+
   // Get all players grouped by group_name
   const { data: players } = await supabase
     .from("players")
@@ -470,7 +497,7 @@ async function eliminateAndStartKnockout(tournamentId: string, isLeague: boolean
     player1_id: match.player1Id,
     player2_id: match.player2Id,
     stage: "knockout",
-    sets_to_win: 3, // First to 3 sets in knockout
+    sets_to_win: knockoutSetsToWin,
   }));
 
   await supabase.from("matches").insert(knockoutMatchesToInsert);

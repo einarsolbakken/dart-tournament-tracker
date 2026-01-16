@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useCreateTournament } from "@/hooks/useTournaments";
-import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid, Zap, ArrowLeft, CalendarIcon } from "lucide-react";
+import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid, Zap, ArrowLeft, CalendarIcon, Settings } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { LoadingSpinner } from "./LoadingSpinner";
@@ -31,6 +31,13 @@ export function CreateTournamentForm() {
   const [isCreating, setIsCreating] = useState(false);
   const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>("group");
   const [matchesPerPlayer, setMatchesPerPlayer] = useState<number>(3);
+  
+  // Game rules state
+  const [gameMode, setGameMode] = useState<string>("301");
+  const [groupSetsToWin, setGroupSetsToWin] = useState<number>(2);
+  const [knockoutSetsToWin, setKnockoutSetsToWin] = useState<number>(3);
+  const [groupCheckoutType, setGroupCheckoutType] = useState<string>("single");
+  const [knockoutCheckoutType, setKnockoutCheckoutType] = useState<string>("double");
 
   const addPlayer = () => {
     setPlayerNames([...playerNames, ""]);
@@ -129,6 +136,11 @@ export function CreateTournamentForm() {
         playerNames: validPlayers,
         format: tournamentFormat,
         matchesPerPlayer: tournamentFormat === "league" ? matchesPerPlayer : undefined,
+        gameMode,
+        groupSetsToWin,
+        knockoutSetsToWin,
+        groupCheckoutType,
+        knockoutCheckoutType,
       });
       
       toast.success("Turnering opprettet!");
@@ -302,45 +314,133 @@ export function CreateTournamentForm() {
               </RadioGroup>
             </div>
 
-            {/* Format info - enhanced */}
-            <div className="relative rounded-xl border border-border/50 bg-muted/30 p-5 space-y-3">
+            {/* Game Rules Configuration */}
+            <div className="relative rounded-xl border border-border/50 bg-muted/30 p-5 space-y-5">
               <div className="absolute -top-3 left-4 px-2 bg-card">
                 <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" />
-                  {tournamentFormat === "group" ? "Gruppespill format" : "Ligasystem format"}
+                  <Settings className="w-3.5 h-3.5" />
+                  Spilleregler
                 </span>
               </div>
-              {tournamentFormat === "group" ? (
-                <ul className="space-y-2 text-sm pt-1">
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                    <span><strong className="text-foreground">Gruppespill:</strong> <span className="text-muted-foreground">301, single checkout, first to 2 sets</span></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2 shrink-0" />
-                    <span><strong className="text-foreground">Sluttspill:</strong> <span className="text-muted-foreground">301, dobbel checkout, first to 3 sets</span></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 shrink-0" />
-                    <span className="text-muted-foreground">Maks 4 spillere per gruppe, de beste går videre</span>
-                  </li>
-                </ul>
-              ) : (
-                <ul className="space-y-2 text-sm pt-1">
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                    <span><strong className="text-foreground">Ligakamper:</strong> <span className="text-muted-foreground">301, single checkout, first to 2 sets</span></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2 shrink-0" />
-                    <span><strong className="text-foreground">Sluttspill:</strong> <span className="text-muted-foreground">301, dobbel checkout, first to 3 sets</span></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 shrink-0" />
-                    <span className="text-muted-foreground">Alle spiller like mange kamper, beste 16/8/4/2 går videre</span>
-                  </li>
-                </ul>
-              )}
+              
+              {/* Game Mode Selection */}
+              <div className="space-y-3 pt-2">
+                <Label className="text-sm font-medium">Spillmodus</Label>
+                <div className="flex gap-2">
+                  {["201", "301", "501"].map((mode) => (
+                    <Button
+                      key={mode}
+                      type="button"
+                      variant={gameMode === mode ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setGameMode(mode)}
+                      className={cn(
+                        "flex-1 transition-all",
+                        gameMode === mode && "shadow-md"
+                      )}
+                    >
+                      {mode}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Group/League Stage Rules */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">
+                  {tournamentFormat === "group" ? "Gruppespill" : "Ligakamper"}
+                </Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Sets for å vinne</Label>
+                    <Select value={String(groupSetsToWin)} onValueChange={(v) => setGroupSetsToWin(Number(v))}>
+                      <SelectTrigger className="bg-muted/50">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <SelectItem key={n} value={String(n)}>First to {n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Checkout</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={groupCheckoutType === "single" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setGroupCheckoutType("single")}
+                        className="flex-1"
+                      >
+                        Single
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={groupCheckoutType === "double" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setGroupCheckoutType("double")}
+                        className="flex-1"
+                      >
+                        Dobbel
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Knockout Stage Rules */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Sluttspill</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Sets for å vinne</Label>
+                    <Select value={String(knockoutSetsToWin)} onValueChange={(v) => setKnockoutSetsToWin(Number(v))}>
+                      <SelectTrigger className="bg-muted/50">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <SelectItem key={n} value={String(n)}>First to {n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Checkout</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={knockoutCheckoutType === "single" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setKnockoutCheckoutType("single")}
+                        className="flex-1"
+                      >
+                        Single
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={knockoutCheckoutType === "double" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setKnockoutCheckoutType("double")}
+                        className="flex-1"
+                      >
+                        Dobbel
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rules Summary */}
+              <div className="pt-2 border-t border-border/30">
+                <p className="text-xs text-muted-foreground">
+                  <strong className="text-foreground">{tournamentFormat === "group" ? "Gruppespill" : "Liga"}:</strong> {gameMode}, {groupCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {groupSetsToWin} sets
+                  <span className="mx-2">•</span>
+                  <strong className="text-foreground">Sluttspill:</strong> {gameMode}, {knockoutCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {knockoutSetsToWin} sets
+                </p>
+              </div>
             </div>
 
             {/* Players section */}
