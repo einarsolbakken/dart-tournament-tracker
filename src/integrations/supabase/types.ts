@@ -171,7 +171,11 @@ export type Database = {
           current_phase: string
           date: string
           game_mode: string
+          group_checkout_type: string
+          group_sets_to_win: number
           id: string
+          knockout_checkout_type: string
+          knockout_sets_to_win: number
           name: string
           status: string
           tournament_format: string
@@ -181,7 +185,11 @@ export type Database = {
           current_phase?: string
           date: string
           game_mode?: string
+          group_checkout_type?: string
+          group_sets_to_win?: number
           id?: string
+          knockout_checkout_type?: string
+          knockout_sets_to_win?: number
           name: string
           status?: string
           tournament_format?: string
@@ -191,7 +199,11 @@ export type Database = {
           current_phase?: string
           date?: string
           game_mode?: string
+          group_checkout_type?: string
+          group_sets_to_win?: number
           id?: string
+          knockout_checkout_type?: string
+          knockout_sets_to_win?: number
           name?: string
           status?: string
           tournament_format?: string
