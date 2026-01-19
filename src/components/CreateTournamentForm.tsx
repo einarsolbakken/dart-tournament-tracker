@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getValidMatchesPerPlayerOptions, getDefaultMatchesPerPlayer, getLeagueKnockoutSize, validateLeagueConfig } from "@/lib/leagueGenerator";
 import { cn } from "@/lib/utils";
+import { CountryFlagPicker } from "./CountryFlagPicker";
 
 type TournamentFormat = "group" | "league";
 
@@ -28,6 +29,7 @@ export function CreateTournamentForm() {
   const [name, setName] = useState("");
   const [date, setDate] = useState<Date>(new Date());
   const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
+  const [playerCountries, setPlayerCountries] = useState<string[]>(["", ""]);
   const [isCreating, setIsCreating] = useState(false);
   const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>("group");
   const [matchesPerPlayer, setMatchesPerPlayer] = useState<number>(3);
@@ -41,11 +43,13 @@ export function CreateTournamentForm() {
 
   const addPlayer = () => {
     setPlayerNames([...playerNames, ""]);
+    setPlayerCountries([...playerCountries, ""]);
   };
 
   const removePlayer = (index: number) => {
     if (playerNames.length > 2) {
       setPlayerNames(playerNames.filter((_, i) => i !== index));
+      setPlayerCountries(playerCountries.filter((_, i) => i !== index));
     }
   };
 
@@ -53,6 +57,12 @@ export function CreateTournamentForm() {
     const updated = [...playerNames];
     updated[index] = value;
     setPlayerNames(updated);
+  };
+
+  const updatePlayerCountry = (index: number, value: string) => {
+    const updated = [...playerCountries];
+    updated[index] = value;
+    setPlayerCountries(updated);
   };
 
   const validPlayerCount = playerNames.filter((n) => n.trim()).length;
@@ -478,18 +488,26 @@ export function CreateTournamentForm() {
                     <div className="w-8 h-10 flex items-center justify-center text-sm text-muted-foreground font-medium">
                       {index + 1}.
                     </div>
-                    <Input
-                      value={playerName}
-                      onChange={(e) => updatePlayerName(index, e.target.value)}
-                      placeholder={`Spiller ${index + 1}`}
-                      className={cn(
-                        "flex-1 bg-muted/30 border-border/50 transition-all",
-                        "focus:border-primary focus:ring-primary/20",
-                        "group-hover:border-border",
-                        playerName.trim() && duplicateNames.has(playerName.trim().toLowerCase()) && 
-                          "border-destructive focus-visible:ring-destructive"
-                      )}
-                    />
+                    <div className="flex-1 flex gap-0">
+                      <Input
+                        value={playerName}
+                        onChange={(e) => updatePlayerName(index, e.target.value)}
+                        placeholder={`Spiller ${index + 1}`}
+                        className={cn(
+                          "flex-1 bg-muted/30 border-border/50 transition-all rounded-r-none border-r-0",
+                          "focus:border-primary focus:ring-primary/20",
+                          "group-hover:border-border",
+                          playerName.trim() && duplicateNames.has(playerName.trim().toLowerCase()) && 
+                            "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                      <div className="border border-l-0 border-border/50 rounded-r-md bg-muted/30 flex items-center group-hover:border-border transition-all">
+                        <CountryFlagPicker
+                          value={playerCountries[index]}
+                          onChange={(code) => updatePlayerCountry(index, code)}
+                        />
+                      </div>
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
