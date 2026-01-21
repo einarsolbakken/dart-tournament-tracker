@@ -114,6 +114,7 @@ export type Database = {
       }
       players: {
         Row: {
+          country: string | null
           created_at: string
           group_name: string | null
           group_points: number | null
@@ -128,6 +129,7 @@ export type Database = {
           tournament_id: string
         }
         Insert: {
+          country?: string | null
           created_at?: string
           group_name?: string | null
           group_points?: number | null
@@ -142,6 +144,7 @@ export type Database = {
           tournament_id: string
         }
         Update: {
+          country?: string | null
           created_at?: string
           group_name?: string | null
           group_points?: number | null

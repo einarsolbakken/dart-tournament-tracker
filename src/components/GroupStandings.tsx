@@ -8,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getCountryFlag, getCountryGradient } from "./CountryFlagPicker";
 
 interface Player {
   id: string;
@@ -19,6 +20,7 @@ interface Player {
   total_darts: number;
   total_score: number;
   is_eliminated: boolean;
+  country?: string | null;
 }
 
 interface Match {
@@ -126,6 +128,8 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
                       
                       // Calculate average per 3 darts using real data
                       const avgDisplay = calculateAvg(player.total_score || 0, player.total_darts || 0);
+                      const countryGradient = player.country ? getCountryGradient(player.country) : undefined;
+                      const countryFlag = player.country ? getCountryFlag(player.country) : "";
                       
                       return (
                         <tr 
@@ -135,13 +139,15 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
                             isLast && completedMatches === totalMatches && "bg-destructive/10",
                             player.is_eliminated && "opacity-50"
                           )}
+                          style={countryGradient ? { background: countryGradient } : undefined}
                         >
                           <td className="py-2 px-3 text-muted-foreground">{index + 1}</td>
                           <td className="py-2 px-3 font-medium">
                             {player.name.length > NAME_TRUNCATE_THRESHOLD ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <span className="flex items-center gap-2 max-w-[120px]">
+                                  <span className="flex items-center gap-2 max-w-[140px]">
+                                    {countryFlag && <span className="text-sm shrink-0">{countryFlag}</span>}
                                     <span className="truncate">{player.name}</span>
                                     {player.is_eliminated && (
                                       <XCircle className="w-3 h-3 text-destructive flex-shrink-0" />
@@ -153,7 +159,8 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch }: 
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
-                              <span className="flex items-center gap-2 max-w-[120px]">
+                              <span className="flex items-center gap-2 max-w-[140px]">
+                                {countryFlag && <span className="text-sm shrink-0">{countryFlag}</span>}
                                 <span className="truncate">{player.name}</span>
                                 {player.is_eliminated && (
                                   <XCircle className="w-3 h-3 text-destructive flex-shrink-0" />
