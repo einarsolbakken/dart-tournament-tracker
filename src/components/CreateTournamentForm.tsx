@@ -565,17 +565,22 @@ export function CreateTournamentForm() {
                       <div className="w-7 h-10 flex items-center justify-center text-sm text-muted-foreground font-medium shrink-0">
                         {index + 1}.
                       </div>
-                      <div className="flex-1 flex gap-0 min-w-0">
+                      <div className={cn(
+                        "flex-1 flex min-w-0 rounded-md ring-offset-background transition-all",
+                        "focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2",
+                        playerName.trim() && duplicateNames.has(playerName.trim().toLowerCase()) && 
+                          "focus-within:ring-destructive"
+                      )}>
                         <Input
                           value={playerName}
                           onChange={(e) => updatePlayerName(index, e.target.value)}
                           placeholder={`Spiller ${index + 1}`}
                           className={cn(
                             "flex-1 bg-muted/30 border-border/50 transition-all rounded-r-none border-r-0",
-                            "focus:border-accent focus:ring-accent/20",
+                            "focus-visible:ring-0 focus-visible:ring-offset-0",
                             "group-hover:border-border",
                             playerName.trim() && duplicateNames.has(playerName.trim().toLowerCase()) && 
-                              "border-destructive focus-visible:ring-destructive"
+                              "border-destructive"
                           )}
                         />
                         <div className="border border-l-0 border-border/50 rounded-r-md bg-muted/30 flex items-center group-hover:border-border transition-all">
