@@ -555,7 +555,7 @@ export function CreateTournamentForm() {
                   </Button>
                 </div>
                 
-                <div className="space-y-2 max-h-[50vh] lg:max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin">
+                <div className="space-y-3 max-h-[50vh] lg:max-h-[60vh] overflow-y-auto overflow-x-visible px-1 -mx-1 scrollbar-thin">
                   {playerNames.map((playerName, index) => (
                     <div 
                       key={index} 
