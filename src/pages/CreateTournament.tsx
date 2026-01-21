@@ -5,7 +5,7 @@ const CreateTournament = () => {
   return (
     <AppLayout>
       <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-6 max-w-2xl">
+        <main className="py-6">
           <CreateTournamentForm />
         </main>
       </div>
