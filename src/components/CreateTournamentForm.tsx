@@ -175,7 +175,7 @@ export function CreateTournamentForm() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4">
+    <div className="w-full px-4 lg:px-8">
       {/* Header */}
       <div className="relative flex items-center justify-center mb-8">
         <Link to="/" className="absolute left-0">
