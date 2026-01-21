@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useCreateTournament } from "@/hooks/useTournaments";
-import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid, Zap, ArrowLeft, CalendarIcon, Settings } from "lucide-react";
+import { Plus, Trash2, Target, Users, AlertCircle, Trophy, LayoutGrid, Zap, ArrowLeft, CalendarIcon, Settings, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { LoadingSpinner } from "./LoadingSpinner";
@@ -163,8 +163,8 @@ export function CreateTournamentForm() {
 
   if (isCreating) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-card via-card to-primary/5">
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 w-full max-w-md">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
           <CardContent className="py-16 relative">
             <LoadingSpinner message="Genererer grupper og kamper..." />
@@ -175,10 +175,9 @@ export function CreateTournamentForm() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Header with back button on left, title centered */}
-      <div className="relative flex items-center justify-center mb-6 px-4">
-        {/* Back button - absolute left */}
+    <div className="w-full max-w-7xl mx-auto px-4">
+      {/* Header */}
+      <div className="relative flex items-center justify-center mb-8">
         <Link to="/" className="absolute left-0">
           <Button variant="outline" size="sm" className="gap-2">
             <ArrowLeft className="w-4 h-4" />
@@ -186,444 +185,457 @@ export function CreateTournamentForm() {
           </Button>
         </Link>
         
-        {/* Centered title */}
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Target className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
+            <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-primary-foreground" />
           </div>
-          <div className="text-center">
-            <h1 className="font-display text-xl sm:text-2xl">Ny Turnering</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm hidden sm:block">Opprett din neste dartkonkurranse</p>
+          <div className="text-center sm:text-left">
+            <h1 className="font-display text-2xl md:text-3xl">Ny Turnering</h1>
+            <p className="text-muted-foreground text-sm hidden sm:block">Opprett din neste dartkonkurranse</p>
           </div>
         </div>
       </div>
 
-      <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl shadow-black/20">
-        {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
-        
-        <CardContent className="pt-6 pb-6 relative">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Tournament details */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
-                  <Zap className="w-3.5 h-3.5 text-primary" />
-                  Turneringsnavn
-                </Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="F.eks. Fredagspils Open"
-                  required
-                  className="bg-muted/50 border-border/50 focus:border-primary focus:ring-primary/20 transition-all"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Zap className="w-3.5 h-3.5 text-primary" />
-                  Dato
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal bg-muted/50 border-border/50 hover:bg-muted",
-                        !date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP", { locale: nb }) : <span>Velg dato</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={(d) => d && setDate(d)}
-                      initialFocus
-                      locale={nb}
-                      className="pointer-events-auto rounded-md border bg-popover"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            {/* Tournament format selection */}
-            <div className="space-y-4">
-              <Label className="text-sm font-medium">Turneringsformat</Label>
-              <RadioGroup 
-                value={tournamentFormat} 
-                onValueChange={(value) => setTournamentFormat(value as TournamentFormat)}
-                className="grid grid-cols-2 gap-4"
-              >
-                <div className="relative group">
-                  <RadioGroupItem 
-                    value="group" 
-                    id="format-group" 
-                    className="peer sr-only" 
-                  />
-                  <Label 
-                    htmlFor="format-group" 
-                    className={cn(
-                      "flex flex-col items-center justify-center p-6 rounded-xl cursor-pointer transition-all duration-300",
-                      "border-2 bg-muted/30 hover:bg-muted/50",
-                      "peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/15",
-                      "peer-data-[state=checked]:shadow-lg peer-data-[state=checked]:shadow-primary/20",
-                      "group-hover:scale-[1.02]"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-14 h-14 rounded-xl flex items-center justify-center mb-3 transition-all",
-                      "bg-muted/50 group-hover:bg-primary/20",
-                      tournamentFormat === "group" && "bg-primary/30"
-                    )}>
-                      <LayoutGrid className="w-7 h-7 text-primary" />
-                    </div>
-                    <span className="font-semibold text-lg">Gruppespill</span>
-                    <span className="text-xs text-muted-foreground text-center mt-1">
-                      Tradisjonelle grupper → sluttspill
-                    </span>
-                  </Label>
+      <form onSubmit={handleSubmit}>
+        {/* Main Two-Column Layout */}
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+          
+          {/* LEFT COLUMN - Tournament Settings */}
+          <div className="space-y-6">
+            {/* Tournament Info Card */}
+            <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl shadow-black/20">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+              <CardContent className="pt-6 pb-6 space-y-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Target className="w-5 h-5 text-primary" />
+                  <h2 className="font-semibold text-lg">Turneringsinfo</h2>
                 </div>
                 
-                <div className="relative group">
-                  <RadioGroupItem 
-                    value="league" 
-                    id="format-league" 
-                    className="peer sr-only" 
-                  />
-                  <Label 
-                    htmlFor="format-league" 
-                    className={cn(
-                      "flex flex-col items-center justify-center p-6 rounded-xl cursor-pointer transition-all duration-300",
-                      "border-2 bg-muted/30 hover:bg-muted/50",
-                      "peer-data-[state=checked]:border-accent peer-data-[state=checked]:bg-accent/15",
-                      "peer-data-[state=checked]:shadow-lg peer-data-[state=checked]:shadow-accent/20",
-                      "group-hover:scale-[1.02]"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-14 h-14 rounded-xl flex items-center justify-center mb-3 transition-all",
-                      "bg-muted/50 group-hover:bg-accent/20",
-                      tournamentFormat === "league" && "bg-accent/30"
-                    )}>
-                      <Trophy className="w-7 h-7 text-accent" />
-                    </div>
-                    <span className="font-semibold text-lg">Ligasystem</span>
-                    <span className="text-xs text-muted-foreground text-center mt-1">
-                      Alle spiller like mange kamper
-                    </span>
-                  </Label>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                      <Zap className="w-3.5 h-3.5 text-primary" />
+                      Navn
+                    </Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="F.eks. Fredagspils Open"
+                      required
+                      className="bg-muted/50 border-border/50 focus:border-primary focus:ring-primary/20 transition-all"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <CalendarIcon className="w-3.5 h-3.5 text-primary" />
+                      Dato
+                    </Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal bg-muted/50 border-border/50 hover:bg-muted",
+                            !date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {date ? format(date, "PPP", { locale: nb }) : <span>Velg dato</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={(d) => d && setDate(d)}
+                          initialFocus
+                          locale={nb}
+                          className="pointer-events-auto rounded-md border bg-popover"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
-              </RadioGroup>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Game Rules Configuration */}
-            <div className="relative rounded-xl border border-border/50 bg-muted/30 p-5 space-y-5">
-              <div className="absolute -top-3 left-4 px-2 bg-card">
-                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Settings className="w-3.5 h-3.5" />
-                  Spilleregler
-                </span>
-              </div>
-              
-              {/* Game Mode Selection */}
-              <div className="space-y-3 pt-2">
-                <Label className="text-sm font-medium">Spillmodus</Label>
-                <div className="flex gap-2">
-                  {["201", "301", "501"].map((mode) => (
-                    <Button
-                      key={mode}
-                      type="button"
-                      variant={gameMode === mode ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setGameMode(mode)}
+            {/* Tournament Format Card */}
+            <Card className="relative overflow-hidden border-border/30 bg-card/80 shadow-lg">
+              <CardContent className="pt-6 pb-6 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <LayoutGrid className="w-5 h-5 text-primary" />
+                  <h2 className="font-semibold text-lg">Turneringsformat</h2>
+                </div>
+                
+                <RadioGroup 
+                  value={tournamentFormat} 
+                  onValueChange={(value) => setTournamentFormat(value as TournamentFormat)}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  <div className="relative group">
+                    <RadioGroupItem value="group" id="format-group" className="peer sr-only" />
+                    <Label 
+                      htmlFor="format-group" 
                       className={cn(
-                        "flex-1 transition-all",
-                        gameMode === mode && "shadow-md"
+                        "flex flex-col items-center justify-center p-5 rounded-xl cursor-pointer transition-all duration-300",
+                        "border-2 bg-muted/30 hover:bg-muted/50",
+                        "peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/15",
+                        "peer-data-[state=checked]:shadow-lg peer-data-[state=checked]:shadow-primary/20",
+                        "group-hover:scale-[1.02]"
                       )}
                     >
-                      {mode}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Group/League Stage Rules */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">
-                  {tournamentFormat === "group" ? "Gruppespill" : "Ligakamper"}
-                </Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Sets for å vinne</Label>
-                    <Select value={String(groupSetsToWin)} onValueChange={(v) => setGroupSetsToWin(Number(v))}>
-                      <SelectTrigger className="bg-muted/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <SelectItem key={n} value={String(n)}>First to {n}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <div className={cn(
+                        "w-12 h-12 rounded-xl flex items-center justify-center mb-2 transition-all",
+                        "bg-muted/50 group-hover:bg-primary/20",
+                        tournamentFormat === "group" && "bg-primary/30"
+                      )}>
+                        <LayoutGrid className="w-6 h-6 text-primary" />
+                      </div>
+                      <span className="font-semibold">Gruppespill</span>
+                      <span className="text-xs text-muted-foreground text-center mt-1">
+                        Grupper → Sluttspill
+                      </span>
+                    </Label>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Checkout</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={groupCheckoutType === "single" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setGroupCheckoutType("single")}
-                        className="flex-1 min-w-0"
-                      >
-                        Single
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={groupCheckoutType === "double" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setGroupCheckoutType("double")}
-                        className="flex-1 min-w-0"
-                      >
-                        Dobbel
-                      </Button>
-                    </div>
+                  
+                  <div className="relative group">
+                    <RadioGroupItem value="league" id="format-league" className="peer sr-only" />
+                    <Label 
+                      htmlFor="format-league" 
+                      className={cn(
+                        "flex flex-col items-center justify-center p-5 rounded-xl cursor-pointer transition-all duration-300",
+                        "border-2 bg-muted/30 hover:bg-muted/50",
+                        "peer-data-[state=checked]:border-accent peer-data-[state=checked]:bg-accent/15",
+                        "peer-data-[state=checked]:shadow-lg peer-data-[state=checked]:shadow-accent/20",
+                        "group-hover:scale-[1.02]"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-12 h-12 rounded-xl flex items-center justify-center mb-2 transition-all",
+                        "bg-muted/50 group-hover:bg-accent/20",
+                        tournamentFormat === "league" && "bg-accent/30"
+                      )}>
+                        <Trophy className="w-6 h-6 text-accent" />
+                      </div>
+                      <span className="font-semibold">Ligasystem</span>
+                      <span className="text-xs text-muted-foreground text-center mt-1">
+                        Like mange kamper
+                      </span>
+                    </Label>
                   </div>
-                </div>
-              </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
 
-              {/* Knockout Stage Rules */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Sluttspill</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Sets for å vinne</Label>
-                    <Select value={String(knockoutSetsToWin)} onValueChange={(v) => setKnockoutSetsToWin(Number(v))}>
-                      <SelectTrigger className="bg-muted/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <SelectItem key={n} value={String(n)}>First to {n}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Checkout</Label>
-                    <div className="flex gap-2">
+            {/* Game Rules Card */}
+            <Card className="relative overflow-hidden border-border/30 bg-card/80 shadow-lg">
+              <CardContent className="pt-6 pb-6 space-y-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Settings className="w-5 h-5 text-accent" />
+                  <h2 className="font-semibold text-lg">Spilleregler</h2>
+                </div>
+                
+                {/* Game Mode */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Spillmodus</Label>
+                  <div className="flex gap-2">
+                    {["201", "301", "501"].map((mode) => (
                       <Button
+                        key={mode}
                         type="button"
-                        variant={knockoutCheckoutType === "single" ? "default" : "outline"}
+                        variant={gameMode === mode ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setKnockoutCheckoutType("single")}
-                        className="flex-1 min-w-0"
-                      >
-                        Single
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={knockoutCheckoutType === "double" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setKnockoutCheckoutType("double")}
-                        className="flex-1 min-w-0"
-                      >
-                        Dobbel
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rules Summary */}
-              <div className="pt-2 border-t border-border/30">
-                <div className="text-xs text-muted-foreground space-y-1 sm:space-y-0">
-                  <p>
-                    <strong className="text-foreground">{tournamentFormat === "group" ? "Gruppespill" : "Liga"}:</strong> {gameMode}, {groupCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {groupSetsToWin} sets
-                  </p>
-                  <p>
-                    <strong className="text-foreground">Sluttspill:</strong> {gameMode}, {knockoutCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {knockoutSetsToWin} sets
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Players section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-2 text-sm font-medium">
-                  <Users className="w-4 h-4 text-primary" />
-                  Spillere 
-                  <span className="ml-1 px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-bold">
-                    {validPlayerCount}
-                  </span>
-                </Label>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={addPlayer}
-                  className="border-primary/50 hover:bg-primary/10 hover:border-primary transition-all"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Legg til
-                </Button>
-              </div>
-              
-              <div className="grid gap-2 max-h-64 overflow-y-auto pr-2 scrollbar-thin">
-                {playerNames.map((playerName, index) => (
-                  <div 
-                    key={index} 
-                    className="flex gap-2 group animate-in fade-in slide-in-from-left-2 duration-200"
-                    style={{ animationDelay: `${index * 30}ms` }}
-                  >
-                    <div className="w-8 h-10 flex items-center justify-center text-sm text-muted-foreground font-medium">
-                      {index + 1}.
-                    </div>
-                    <div className="flex-1 flex gap-0">
-                      <Input
-                        value={playerName}
-                        onChange={(e) => updatePlayerName(index, e.target.value)}
-                        placeholder={`Spiller ${index + 1}`}
+                        onClick={() => setGameMode(mode)}
                         className={cn(
-                          "flex-1 bg-muted/30 border-border/50 transition-all rounded-r-none border-r-0",
-                          "focus:border-primary focus:ring-primary/20",
-                          "group-hover:border-border",
-                          playerName.trim() && duplicateNames.has(playerName.trim().toLowerCase()) && 
-                            "border-destructive focus-visible:ring-destructive"
+                          "flex-1 transition-all",
+                          gameMode === mode && "shadow-md"
                         )}
-                      />
-                      <div className="border border-l-0 border-border/50 rounded-r-md bg-muted/30 flex items-center group-hover:border-border transition-all">
-                        <CountryFlagPicker
-                          value={playerCountries[index]}
-                          onChange={(code) => updatePlayerCountry(index, code)}
-                        />
+                      >
+                        {mode}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Group/League Rules */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">
+                    {tournamentFormat === "group" ? "Gruppespill" : "Ligakamper"}
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Sets for å vinne</Label>
+                      <Select value={String(groupSetsToWin)} onValueChange={(v) => setGroupSetsToWin(Number(v))}>
+                        <SelectTrigger className="bg-muted/50 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <SelectItem key={n} value={String(n)}>First to {n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Checkout</Label>
+                      <div className="flex gap-1">
+                        <Button
+                          type="button"
+                          variant={groupCheckoutType === "single" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setGroupCheckoutType("single")}
+                          className="flex-1 h-9 text-xs"
+                        >
+                          Single
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={groupCheckoutType === "double" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setGroupCheckoutType("double")}
+                          className="flex-1 h-9 text-xs"
+                        >
+                          Dobbel
+                        </Button>
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removePlayer(index)}
-                      disabled={playerNames.length <= 2}
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
-                ))}
-              </div>
-              
-              {hasDuplicates && (
-                <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Spillere kan ikke ha samme navn. Vennligst gi unike navn til alle spillere.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
+                </div>
 
-            {/* Group preview - enhanced */}
+                {/* Knockout Rules */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Sluttspill</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Sets for å vinne</Label>
+                      <Select value={String(knockoutSetsToWin)} onValueChange={(v) => setKnockoutSetsToWin(Number(v))}>
+                        <SelectTrigger className="bg-muted/50 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <SelectItem key={n} value={String(n)}>First to {n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Checkout</Label>
+                      <div className="flex gap-1">
+                        <Button
+                          type="button"
+                          variant={knockoutCheckoutType === "single" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setKnockoutCheckoutType("single")}
+                          className="flex-1 h-9 text-xs"
+                        >
+                          Single
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={knockoutCheckoutType === "double" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setKnockoutCheckoutType("double")}
+                          className="flex-1 h-9 text-xs"
+                        >
+                          Dobbel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rules Summary */}
+                <div className="pt-3 border-t border-border/30 text-xs text-muted-foreground space-y-1">
+                  <p><span className="text-foreground font-medium">{tournamentFormat === "group" ? "Gruppespill" : "Liga"}:</span> {gameMode}, {groupCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {groupSetsToWin}</p>
+                  <p><span className="text-foreground font-medium">Sluttspill:</span> {gameMode}, {knockoutCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {knockoutSetsToWin}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Group/League Preview */}
             {groupPreview && (
-              <div className="space-y-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
-                <h4 className="text-sm font-medium flex items-center gap-2">
-                  <LayoutGrid className="w-4 h-4 text-primary" />
-                  Forhåndsvisning av grupper
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {groupPreview.groups.map(group => (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="pt-5 pb-5 space-y-3">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <LayoutGrid className="w-4 h-4 text-primary" />
+                    Forhåndsvisning
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {groupPreview.groups.map(group => (
+                      <div 
+                        key={group.name} 
+                        className="bg-muted/50 border border-border/50 px-3 py-1.5 rounded-lg text-sm"
+                      >
+                        Gruppe {group.name}: <span className="text-primary font-medium">{group.playerIds.length}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-accent" />
+                    {groupPreview.advancing} spillere går videre
+                  </p>
+                  {!groupPreview.isEven && (
+                    <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-xs">
+                        Oddetall spillere går videre. Den dårligste elimineres.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {leaguePreview && (
+              <Card className="border-accent/20 bg-accent/5">
+                <CardContent className="pt-5 pb-5 space-y-3">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-accent" />
+                    Kamper per spiller
+                  </h4>
+                  <Select 
+                    value={matchesPerPlayer.toString()} 
+                    onValueChange={(v) => setMatchesPerPlayer(parseInt(v))}
+                  >
+                    <SelectTrigger className="w-full bg-muted/30 border-border/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leaguePreview.validOptions.map(opt => (
+                        <SelectItem key={opt} value={opt.toString()}>
+                          {opt} kamper per spiller ({(validPlayerCount * opt) / 2} totalt)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {!leaguePreview.isValid && (
+                    <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-xs">{leaguePreview.errorMessage}</AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {leaguePreview.isValid && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-accent" />
+                      De {leaguePreview.knockoutSize} beste går videre
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN - Players */}
+          <div className="lg:sticky lg:top-4 lg:self-start">
+            <Card className="relative overflow-hidden border-accent/20 bg-gradient-to-br from-card via-card to-accent/5 shadow-xl shadow-black/20">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent via-primary to-accent" />
+              <CardContent className="pt-6 pb-6 space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-accent" />
+                    <h2 className="font-semibold text-lg">Spillere</h2>
+                    <span className="ml-1 px-2.5 py-0.5 rounded-full bg-accent/20 text-accent text-sm font-bold">
+                      {validPlayerCount}
+                    </span>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addPlayer}
+                    className="border-accent/50 hover:bg-accent/10 hover:border-accent transition-all"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Legg til
+                  </Button>
+                </div>
+                
+                <div className="space-y-2 max-h-[50vh] lg:max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin">
+                  {playerNames.map((playerName, index) => (
                     <div 
-                      key={group.name} 
-                      className="bg-muted/50 border border-border/50 px-4 py-2 rounded-lg text-sm font-medium"
+                      key={index} 
+                      className="flex gap-2 group animate-in fade-in slide-in-from-right-2 duration-200"
+                      style={{ animationDelay: `${index * 30}ms` }}
                     >
-                      Gruppe {group.name}: <span className="text-primary">{group.playerIds.length}</span> spillere
+                      <div className="w-7 h-10 flex items-center justify-center text-sm text-muted-foreground font-medium shrink-0">
+                        {index + 1}.
+                      </div>
+                      <div className="flex-1 flex gap-0 min-w-0">
+                        <Input
+                          value={playerName}
+                          onChange={(e) => updatePlayerName(index, e.target.value)}
+                          placeholder={`Spiller ${index + 1}`}
+                          className={cn(
+                            "flex-1 bg-muted/30 border-border/50 transition-all rounded-r-none border-r-0",
+                            "focus:border-accent focus:ring-accent/20",
+                            "group-hover:border-border",
+                            playerName.trim() && duplicateNames.has(playerName.trim().toLowerCase()) && 
+                              "border-destructive focus-visible:ring-destructive"
+                          )}
+                        />
+                        <div className="border border-l-0 border-border/50 rounded-r-md bg-muted/30 flex items-center group-hover:border-border transition-all">
+                          <CountryFlagPicker
+                            value={playerCountries[index]}
+                            onChange={(code) => updatePlayerCountry(index, code)}
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removePlayer(index)}
+                        disabled={playerNames.length <= 2}
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all opacity-0 group-hover:opacity-100 shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   ))}
                 </div>
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-accent" />
-                  {groupPreview.advancing} spillere går videre til sluttspill
-                </p>
-                {!groupPreview.isEven && (
+                
+                {hasDuplicates && (
                   <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Oddetall spillere går videre. Den dårligste nest-sisteplassen elimineres også.
+                    <AlertDescription className="text-sm">
+                      Spillere kan ikke ha samme navn.
                     </AlertDescription>
                   </Alert>
                 )}
-              </div>
-            )}
 
-            {/* League preview - enhanced */}
-            {leaguePreview && (
-              <div className="space-y-3 p-4 rounded-xl bg-accent/5 border border-accent/20">
-                <h4 className="text-sm font-medium flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-accent" />
-                  Kamper per spiller
-                </h4>
-                <Select 
-                  value={matchesPerPlayer.toString()} 
-                  onValueChange={(v) => setMatchesPerPlayer(parseInt(v))}
-                >
-                  <SelectTrigger className="w-full bg-muted/30 border-border/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {leaguePreview.validOptions.map(opt => (
-                      <SelectItem key={opt} value={opt.toString()}>
-                        {opt} kamper per spiller ({(validPlayerCount * opt) / 2} totalt)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {!leaguePreview.isValid && (
-                  <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{leaguePreview.errorMessage}</AlertDescription>
-                  </Alert>
-                )}
-                
-                {leaguePreview.isValid && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-accent" />
-                    De {leaguePreview.knockoutSize} beste går videre til sluttspill
+                {/* Submit Button */}
+                <div className="pt-4 border-t border-border/30">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className={cn(
+                      "w-full relative overflow-hidden font-semibold text-lg py-6",
+                      "bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90",
+                      "shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
+                      "transition-all duration-300 hover:scale-[1.02]",
+                      "disabled:opacity-50 disabled:hover:scale-100"
+                    )}
+                    disabled={createTournament.isPending || validPlayerCount < 3 || hasDuplicates}
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      <Target className="w-5 h-5" />
+                      {createTournament.isPending ? "Oppretter..." : "Start Turnering"}
+                    </span>
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center mt-3">
+                    {validPlayerCount < 3 ? `Legg til ${3 - validPlayerCount} flere spiller(e)` : "Klar til å starte!"}
                   </p>
-                )}
-              </div>
-            )}
-
-            {/* Submit button - enhanced */}
-            <Button
-              type="submit"
-              size="lg"
-              className={cn(
-                "w-full relative overflow-hidden font-semibold text-lg py-6",
-                "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70",
-                "shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
-                "transition-all duration-300 hover:scale-[1.02]",
-                "disabled:opacity-50 disabled:hover:scale-100"
-              )}
-              disabled={createTournament.isPending || validPlayerCount < 3 || hasDuplicates}
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <Target className="w-5 h-5" />
-                {createTournament.isPending ? "Oppretter..." : "Start Turnering"}
-              </span>
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }
