@@ -5,6 +5,7 @@ import { Trophy, Medal, Edit3, CheckCircle2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
+import { getCountryFlag, getCountryGradient } from "./CountryFlagPicker";
 
 interface LeagueStandingsProps {
   players: Player[];
@@ -115,10 +116,14 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch }:
                   : 0;
                 const setDiff = (player.group_sets_won || 0) - (player.group_sets_lost || 0);
                 
+                const countryGradient = player.country ? getCountryGradient(player.country) : undefined;
+                const countryFlag = player.country ? getCountryFlag(player.country) : "";
+                
                 return (
                   <TableRow 
                     key={player.id}
                     className={willAdvance ? "bg-primary/5" : player.is_eliminated ? "bg-destructive/5" : ""}
+                    style={countryGradient ? { background: countryGradient } : undefined}
                   >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-1">
@@ -128,6 +133,7 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch }:
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
+                        {countryFlag && <span className="text-base">{countryFlag}</span>}
                         {renderPlayerName(player)}
                         {willAdvance && (
                           <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">

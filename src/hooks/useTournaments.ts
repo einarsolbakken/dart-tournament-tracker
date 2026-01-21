@@ -31,6 +31,7 @@ export interface Player {
   total_darts: number;
   total_score: number;
   is_eliminated: boolean;
+  country: string | null;
   created_at: string;
 }
 
@@ -132,6 +133,7 @@ export function useCreateTournament() {
       name,
       date,
       playerNames,
+      playerCountries = [],
       format = "group",
       matchesPerPlayer,
       gameMode = "301",
@@ -143,6 +145,7 @@ export function useCreateTournament() {
       name: string;
       date: string;
       playerNames: string[];
+      playerCountries?: string[];
       format?: "group" | "league";
       matchesPerPlayer?: number;
       gameMode?: string;
@@ -178,6 +181,7 @@ export function useCreateTournament() {
         tournament_id: tournament.id,
         name: playerName,
         seed: index + 1,
+        country: playerCountries[index] || null,
       }));
 
       const { data: players, error: playersError } = await supabase

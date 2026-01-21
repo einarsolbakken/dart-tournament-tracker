@@ -158,3 +158,30 @@ export function getCountryFlag(code: string): string {
   const country = COUNTRIES.find(c => c.code === code);
   return country?.flag || "";
 }
+
+// Returns a subtle gradient background based on country flag colors
+export function getCountryGradient(code: string): string | undefined {
+  const gradients: Record<string, string> = {
+    NO: "linear-gradient(90deg, rgba(186,12,47,0.08) 0%, rgba(0,32,91,0.08) 100%)",
+    SE: "linear-gradient(90deg, rgba(0,106,167,0.08) 0%, rgba(254,204,2,0.08) 100%)",
+    DK: "linear-gradient(90deg, rgba(198,12,48,0.08) 0%, rgba(255,255,255,0.05) 100%)",
+    FI: "linear-gradient(90deg, rgba(0,47,108,0.08) 0%, rgba(255,255,255,0.05) 100%)",
+    GB: "linear-gradient(90deg, rgba(1,33,105,0.08) 0%, rgba(200,16,46,0.08) 100%)",
+    NL: "linear-gradient(90deg, rgba(174,28,40,0.08) 0%, rgba(33,70,139,0.08) 100%)",
+    DE: "linear-gradient(90deg, rgba(0,0,0,0.06) 0%, rgba(255,206,0,0.08) 50%, rgba(221,0,0,0.08) 100%)",
+    BE: "linear-gradient(90deg, rgba(0,0,0,0.06) 0%, rgba(253,218,36,0.08) 50%, rgba(239,51,64,0.08) 100%)",
+    IE: "linear-gradient(90deg, rgba(22,155,98,0.08) 0%, rgba(255,136,62,0.08) 100%)",
+    US: "linear-gradient(90deg, rgba(60,59,110,0.08) 0%, rgba(178,34,52,0.08) 100%)",
+    FR: "linear-gradient(90deg, rgba(0,35,149,0.08) 0%, rgba(237,41,57,0.08) 100%)",
+    ES: "linear-gradient(90deg, rgba(198,11,30,0.08) 0%, rgba(255,196,0,0.08) 100%)",
+    IT: "linear-gradient(90deg, rgba(0,140,69,0.08) 0%, rgba(206,43,55,0.08) 100%)",
+    PT: "linear-gradient(90deg, rgba(0,102,0,0.08) 0%, rgba(255,0,0,0.08) 100%)",
+    PL: "linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(220,20,60,0.08) 100%)",
+    BR: "linear-gradient(90deg, rgba(0,156,59,0.08) 0%, rgba(254,223,0,0.08) 100%)",
+    AR: "linear-gradient(90deg, rgba(116,172,223,0.08) 0%, rgba(255,255,255,0.05) 100%)",
+    JP: "linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(188,0,45,0.08) 100%)",
+    AU: "linear-gradient(90deg, rgba(0,0,139,0.08) 0%, rgba(255,255,255,0.05) 100%)",
+    IS: "linear-gradient(90deg, rgba(0,56,151,0.08) 0%, rgba(215,40,40,0.08) 100%)",
+  };
+  return gradients[code];
+}

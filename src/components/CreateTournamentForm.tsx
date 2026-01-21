@@ -140,10 +140,15 @@ export function CreateTournamentForm() {
     setIsCreating(true);
 
     try {
+      const validCountries = playerNames
+        .map((n, i) => n.trim() ? playerCountries[i] : null)
+        .filter((_, i) => playerNames[i].trim());
+      
       const tournament = await createTournament.mutateAsync({
         name,
         date: format(date, "yyyy-MM-dd"),
         playerNames: validPlayers,
+        playerCountries: validCountries,
         format: tournamentFormat,
         matchesPerPlayer: tournamentFormat === "league" ? matchesPerPlayer : undefined,
         gameMode,
