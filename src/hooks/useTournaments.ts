@@ -367,9 +367,9 @@ export function useUpdateGroupMatch() {
         .eq("tournament_id", tournamentId)
         .in("stage", ["group", "league"]);
 
-      const allCompleted = allStageMatches?.every(m => m.status === "completed");
+      const allDone = allStageMatches?.every(m => m.status === "completed" || m.status === "skipped");
 
-      if (allCompleted && allStageMatches && allStageMatches.length > 0) {
+      if (allDone && allStageMatches && allStageMatches.length > 0) {
         // Check which stage type it is
         const isLeague = allStageMatches[0].stage === "league";
         // Eliminate players and start knockout
@@ -628,6 +628,55 @@ export function useDeleteTournament() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+    },
+  });
+}
+
+export function useSkipMatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      matchId,
+      tournamentId,
+    }: {
+      matchId: string;
+      tournamentId: string;
+    }) => {
+      // Update the match to skipped status (no winner, no score changes)
+      const { data: match, error } = await supabase
+        .from("matches")
+        .update({
+          status: "skipped",
+        })
+        .eq("id", matchId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Check if group/league stage is complete (all matches completed or skipped)
+      const { data: allStageMatches } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("tournament_id", tournamentId)
+        .in("stage", ["group", "league"]);
+
+      const allDone = allStageMatches?.every(m => m.status === "completed" || m.status === "skipped");
+
+      if (allDone && allStageMatches && allStageMatches.length > 0) {
+        // Check which stage type it is
+        const isLeague = allStageMatches[0].stage === "league";
+        // Eliminate players and start knockout
+        await eliminateAndStartKnockout(tournamentId, isLeague);
+      }
+
+      return match;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["matches", variables.tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["players", variables.tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["tournament", variables.tournamentId] });
     },
   });
 }

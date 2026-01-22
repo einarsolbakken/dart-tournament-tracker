@@ -1,22 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Edit3, CheckCircle2 } from "lucide-react";
+import { Trophy, Medal, Edit3, CheckCircle2, SkipForward } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
 import { getCountryFlag, getCountryGradient } from "./CountryFlagPicker";
+import { isDeadRubberMatch, getKnockoutSize } from "@/lib/deadRubberDetection";
 
 interface LeagueStandingsProps {
   players: Player[];
   matches: Match[];
   onMatchClick: (match: Match) => void;
   onEditMatch?: (match: Match) => void;
+  onSkipMatch?: (match: Match) => void;
 }
 
 const NAME_TRUNCATE_THRESHOLD = 12;
 
-export function LeagueStandings({ players, matches, onMatchClick, onEditMatch }: LeagueStandingsProps) {
+export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, onSkipMatch }: LeagueStandingsProps) {
   // Sort players by league standings
   const sortedPlayers = [...players].sort((a, b) => {
     // 1. Sort by points first
@@ -37,18 +39,31 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch }:
 
   // Count completed and pending matches
   const completedMatches = matches.filter(m => m.status === "completed");
-  const pendingMatches = matches.filter(m => m.status !== "completed");
+  const pendingMatches = matches.filter(m => m.status === "pending");
+  const skippedMatches = matches.filter(m => m.status === "skipped");
   const allCompleted = pendingMatches.length === 0;
 
   // Determine how many players will advance to knockout
-  const getKnockoutSize = (count: number) => {
-    const validSizes = [16, 8, 4, 2];
-    for (const size of validSizes) {
-      if (count >= size) return size;
-    }
-    return 2;
-  };
   const knockoutSize = getKnockoutSize(players.length);
+
+  // Prepare player standings for dead rubber detection
+  const playerStandings = players.map(p => ({
+    id: p.id,
+    points: p.group_points || 0,
+    setsWon: p.group_sets_won || 0,
+    setsLost: p.group_sets_lost || 0,
+    totalScore: p.total_score || 0,
+    totalDarts: p.total_darts || 0,
+  }));
+
+  // Prepare pending matches for dead rubber detection
+  const pendingMatchInfos = pendingMatches.map(m => ({
+    id: m.id,
+    player1Id: m.player1_id || "",
+    player2Id: m.player2_id || "",
+    status: m.status,
+    setsToWin: m.sets_to_win || 2,
+  }));
 
   const renderPlayerName = (player: Player) => {
     const shouldTruncate = player.name.length > NAME_TRUNCATE_THRESHOLD;
@@ -188,17 +203,35 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch }:
               const player1 = players.find(p => p.id === match.player1_id);
               const player2 = players.find(p => p.id === match.player2_id);
               const isCompleted = match.status === "completed";
+              const isSkipped = match.status === "skipped";
+              const isPending = match.status === "pending";
               const winner = match.winner_id;
+              
+              // Check if this match is a dead rubber (only for pending matches)
+              const deadRubberInfo = isPending ? isDeadRubberMatch(
+                {
+                  id: match.id,
+                  player1Id: match.player1_id || "",
+                  player2Id: match.player2_id || "",
+                  status: match.status,
+                  setsToWin: match.sets_to_win || 2,
+                },
+                playerStandings,
+                pendingMatchInfos,
+                knockoutSize
+              ) : { isDeadRubber: false, reason: "" };
               
               return (
                 <div
                   key={match.id}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                  className={`p-3 rounded-lg border transition-colors ${
                     isCompleted 
-                      ? "bg-muted/30 hover:bg-muted/50" 
-                      : "bg-card hover:bg-muted/20"
+                      ? "bg-muted/30 hover:bg-muted/50 cursor-pointer" 
+                      : isSkipped
+                      ? "bg-muted/20 opacity-60"
+                      : "bg-card hover:bg-muted/20 cursor-pointer"
                   }`}
-                  onClick={() => !isCompleted && onMatchClick(match)}
+                  onClick={() => isPending && onMatchClick(match)}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -234,10 +267,40 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch }:
                           </Button>
                         )}
                       </div>
-                    ) : (
-                      <Badge variant="outline" className="text-xs">
-                        Venter
+                    ) : isSkipped ? (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">
+                        <SkipForward className="w-3 h-3 mr-1" />
+                        Hoppet over
                       </Badge>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        {deadRubberInfo.isDeadRubber && onSkipMatch && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSkipMatch(match);
+                                  }}
+                                >
+                                  <SkipForward className="w-3 h-3 mr-1" />
+                                  Hopp over
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{deadRubberInfo.reason}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        <Badge variant="outline" className="text-xs">
+                          Venter
+                        </Badge>
+                      </div>
                     )}
                   </div>
                 </div>

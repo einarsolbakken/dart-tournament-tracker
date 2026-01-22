@@ -6,19 +6,21 @@ import { GroupStandings } from "@/components/GroupStandings";
 import { LeagueStandings } from "@/components/LeagueStandings";
 import { ScoreDialog } from "@/components/ScoreDialog";
 import { EditMatchDialog } from "@/components/EditMatchDialog";
-import { useTournament, usePlayers, useMatches, Match } from "@/hooks/useTournaments";
+import { useTournament, usePlayers, useMatches, useSkipMatch, Match } from "@/hooks/useTournaments";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Calendar, Target, Trophy, Users, Swords, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
+import { toast } from "sonner";
 
 const TournamentView = () => {
   const { id } = useParams<{ id: string }>();
   const { data: tournament, isLoading: tournamentLoading } = useTournament(id || "");
   const { data: players } = usePlayers(id || "");
   const { data: matches } = useMatches(id || "");
+  const skipMatch = useSkipMatch();
   
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [editMatch, setEditMatch] = useState<Match | null>(null);
@@ -159,6 +161,19 @@ const TournamentView = () => {
                   matches={leagueMatches as any}
                   onMatchClick={(match) => setSelectedMatch(match as any)}
                   onEditMatch={(match) => setEditMatch(match as any)}
+                  onSkipMatch={(match) => {
+                    skipMatch.mutate(
+                      { matchId: match.id, tournamentId: id || "" },
+                      {
+                        onSuccess: () => {
+                          toast.success("Kampen ble hoppet over");
+                        },
+                        onError: () => {
+                          toast.error("Kunne ikke hoppe over kampen");
+                        },
+                      }
+                    );
+                  }}
                 />
               ) : players ? (
                 <GroupStandings
@@ -166,6 +181,19 @@ const TournamentView = () => {
                   matches={groupMatches as any}
                   onMatchClick={(match) => setSelectedMatch(match as any)}
                   onEditMatch={(match) => setEditMatch(match as any)}
+                  onSkipMatch={(match) => {
+                    skipMatch.mutate(
+                      { matchId: match.id, tournamentId: id || "" },
+                      {
+                        onSuccess: () => {
+                          toast.success("Kampen ble hoppet over");
+                        },
+                        onError: () => {
+                          toast.error("Kunne ikke hoppe over kampen");
+                        },
+                      }
+                    );
+                  }}
                 />
               ) : null}
             </TabsContent>
