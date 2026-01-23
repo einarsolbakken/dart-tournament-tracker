@@ -59,6 +59,7 @@ interface GameStateSnapshot {
   currentThrows: ThrowRecord[];
   roundScore: number;
   setNumber: number;
+  lockedCheckoutSuggestion: string[] | null;
 }
 
 export function MatchScoring({
@@ -134,6 +135,7 @@ export function MatchScoring({
       currentThrows: [...currentThrows],
       roundScore,
       setNumber,
+      lockedCheckoutSuggestion,
     };
 
     // Calculate the score at start of this player's turn (before any throws this round)
@@ -394,6 +396,7 @@ export function MatchScoring({
     setCurrentPlayer(lastSnapshot.player);
     setCurrentThrows(lastSnapshot.currentThrows);
     setRoundScore(lastSnapshot.roundScore);
+    setLockedCheckoutSuggestion(lastSnapshot.lockedCheckoutSuggestion);
   };
 
   const formatThrow = (t: ThrowRecord) => {
