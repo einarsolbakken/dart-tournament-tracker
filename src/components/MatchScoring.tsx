@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
 import { Trophy, Undo2, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CheckoutSuggestionDisplay } from "./CheckoutSuggestion";
 
 // Create video element for 180 sound (MP4 requires video element for reliable playback)
 const create180Audio = () => {
@@ -492,6 +493,13 @@ export function MatchScoring({
               setsToWin={setsToWin}
             />
           </div>
+
+          {/* Checkout Suggestion */}
+          <CheckoutSuggestionDisplay
+            score={currentPlayerScore}
+            requireDoubleOut={requireDoubleOut}
+            dartsRemaining={3 - currentThrows.length}
+          />
 
           {/* Current round */}
           <div className="bg-muted rounded-xl p-6">
