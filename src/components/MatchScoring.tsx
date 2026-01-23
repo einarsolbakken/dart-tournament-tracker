@@ -5,6 +5,7 @@ import { Match, Player } from "@/hooks/useTournaments";
 import { Trophy, Undo2, ArrowRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CheckoutSuggestionDisplay } from "./CheckoutSuggestion";
+import { getCheckoutSuggestion, doesThrowMatchSuggestion } from "@/lib/checkoutChart";
 
 // Create video element for 180 sound (MP4 requires video element for reliable playback)
 const create180Audio = () => {
@@ -94,12 +95,21 @@ export function MatchScoring({
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const [setNumber, setSetNumber] = useState(1);
   const [announceScore, setAnnounceScore] = useState<number | null>(null);
+  const [lockedCheckoutSuggestion, setLockedCheckoutSuggestion] = useState<string[] | null>(null);
 
   // Use ref to track if we're in the middle of a player switch
   const switchingPlayerRef = useRef(false);
 
   const currentPlayerScore = currentPlayer === 1 ? player1Score : player2Score;
   const currentPlayerName = currentPlayer === 1 ? player1?.name : player2?.name;
+
+  // Lock checkout suggestion at start of turn if in checkout range
+  useEffect(() => {
+    if (currentThrows.length === 0) {
+      const suggestion = getCheckoutSuggestion(currentPlayerScore, requireDoubleOut);
+      setLockedCheckoutSuggestion(suggestion?.darts || null);
+    }
+  }, [currentThrows.length, currentPlayerScore, requireDoubleOut]);
 
   const handleScore = useCallback((score: number, multiplier: number) => {
     if (currentThrows.length >= 3 || matchResult || switchingPlayerRef.current) return;
@@ -193,6 +203,17 @@ export function MatchScoring({
     const newThrows = [...currentThrows, newThrow];
     setCurrentThrows(newThrows);
     setRoundScore(roundScore + points);
+
+    // Check if throw matches the locked checkout suggestion
+    // If not, unlock the suggestion so it recalculates for new score
+    if (lockedCheckoutSuggestion && lockedCheckoutSuggestion.length > currentThrows.length) {
+      const expectedDart = lockedCheckoutSuggestion[currentThrows.length];
+      if (!doesThrowMatchSuggestion(score, multiplier, expectedDart)) {
+        // Player missed the suggested dart - unlock and get new suggestion for remaining score
+        const newSuggestion = getCheckoutSuggestion(newScore, requireDoubleOut);
+        setLockedCheckoutSuggestion(newSuggestion?.darts || null);
+      }
+    }
 
     // Update score, darts, and total tracking
     if (currentPlayer === 1) {
@@ -498,7 +519,8 @@ export function MatchScoring({
           <CheckoutSuggestionDisplay
             score={currentPlayerScore}
             requireDoubleOut={requireDoubleOut}
-            dartsRemaining={3 - currentThrows.length}
+            dartsThrown={currentThrows.length}
+            lockedSuggestion={lockedCheckoutSuggestion}
           />
 
           {/* Current round */}

@@ -260,3 +260,35 @@ export function formatDartDisplay(dart: string): string {
   if (dart.startsWith("S")) return dart.substring(1); // Remove S prefix for singles
   return dart;
 }
+
+// Check if a thrown dart matches the expected dart from the suggestion
+export function doesThrowMatchSuggestion(
+  thrownScore: number,
+  thrownMultiplier: number,
+  expectedDart: string
+): boolean {
+  // Parse the expected dart
+  if (expectedDart === "Bull") {
+    return thrownScore === 50 && thrownMultiplier === 1;
+  }
+  if (expectedDart === "OB") {
+    return thrownScore === 25 && thrownMultiplier === 1;
+  }
+  
+  const prefix = expectedDart.charAt(0);
+  const value = parseInt(expectedDart.substring(1), 10);
+  
+  if (prefix === "T") {
+    return thrownScore === value && thrownMultiplier === 3;
+  }
+  if (prefix === "D") {
+    return thrownScore === value && thrownMultiplier === 2;
+  }
+  if (prefix === "S") {
+    return thrownScore === value && thrownMultiplier === 1;
+  }
+  
+  // Plain number (single)
+  const plainValue = parseInt(expectedDart, 10);
+  return thrownScore === plainValue && thrownMultiplier === 1;
+}
