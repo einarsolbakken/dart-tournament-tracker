@@ -15,6 +15,9 @@ export function CheckoutSuggestionDisplay({
   lockedSuggestion,
   suggestionLockedAtThrow,
 }: CheckoutSuggestionProps) {
+  // Calculate how many darts left in this round
+  const dartsRemaining = 3 - dartsThrown;
+  
   // Calculate how many darts into the suggestion we are
   const dartsIntoSuggestion = dartsThrown - suggestionLockedAtThrow;
 
@@ -22,7 +25,8 @@ export function CheckoutSuggestionDisplay({
   if (lockedSuggestion && lockedSuggestion.length > 0) {
     const remainingDarts = lockedSuggestion.slice(dartsIntoSuggestion);
     
-    if (remainingDarts.length === 0) {
+    // Don't show if no remaining darts in suggestion, or if we can't complete the checkout this round
+    if (remainingDarts.length === 0 || remainingDarts.length > dartsRemaining) {
       return null;
     }
 
@@ -47,7 +51,8 @@ export function CheckoutSuggestionDisplay({
   // No locked suggestion - check if we can show a new one
   const suggestion = getCheckoutSuggestion(score, requireDoubleOut);
 
-  if (!suggestion || dartsThrown >= 3) {
+  // Don't show if no suggestion, no darts left, or can't complete checkout this round
+  if (!suggestion || dartsRemaining === 0 || suggestion.darts.length > dartsRemaining) {
     return null;
   }
 
