@@ -61,6 +61,7 @@ interface GameStateSnapshot {
   roundScore: number;
   setNumber: number;
   lockedCheckoutSuggestion: string[] | null;
+  suggestionLockedAtThrow: number;
 }
 
 export function MatchScoring({
@@ -99,6 +100,7 @@ export function MatchScoring({
   const [setNumber, setSetNumber] = useState(1);
   const [announceScore, setAnnounceScore] = useState<number | null>(null);
   const [lockedCheckoutSuggestion, setLockedCheckoutSuggestion] = useState<string[] | null>(null);
+  const [suggestionLockedAtThrow, setSuggestionLockedAtThrow] = useState<number>(0);
 
   // Use ref to track if we're in the middle of a player switch
   const switchingPlayerRef = useRef(false);
@@ -111,6 +113,7 @@ export function MatchScoring({
     if (currentThrows.length === 0) {
       const suggestion = getCheckoutSuggestion(currentPlayerScore, requireDoubleOut);
       setLockedCheckoutSuggestion(suggestion?.darts || null);
+      setSuggestionLockedAtThrow(0);
     }
   }, [currentThrows.length, currentPlayerScore, requireDoubleOut]);
 
@@ -138,6 +141,7 @@ export function MatchScoring({
       roundScore,
       setNumber,
       lockedCheckoutSuggestion,
+      suggestionLockedAtThrow,
     };
 
     // Calculate the score at start of this player's turn (before any throws this round)
@@ -210,12 +214,14 @@ export function MatchScoring({
 
     // Check if throw matches the locked checkout suggestion
     // If not, unlock the suggestion so it recalculates for new score
-    if (lockedCheckoutSuggestion && lockedCheckoutSuggestion.length > currentThrows.length) {
-      const expectedDart = lockedCheckoutSuggestion[currentThrows.length];
+    const throwIndexInSuggestion = currentThrows.length - suggestionLockedAtThrow;
+    if (lockedCheckoutSuggestion && lockedCheckoutSuggestion.length > throwIndexInSuggestion) {
+      const expectedDart = lockedCheckoutSuggestion[throwIndexInSuggestion];
       if (!doesThrowMatchSuggestion(score, multiplier, expectedDart)) {
         // Player missed the suggested dart - unlock and get new suggestion for remaining score
         const newSuggestion = getCheckoutSuggestion(newScore, requireDoubleOut);
         setLockedCheckoutSuggestion(newSuggestion?.darts || null);
+        setSuggestionLockedAtThrow(currentThrows.length + 1); // Lock at next throw position
       }
     }
 
@@ -399,6 +405,7 @@ export function MatchScoring({
     setCurrentThrows(lastSnapshot.currentThrows);
     setRoundScore(lastSnapshot.roundScore);
     setLockedCheckoutSuggestion(lastSnapshot.lockedCheckoutSuggestion);
+    setSuggestionLockedAtThrow(lastSnapshot.suggestionLockedAtThrow);
   };
 
   const formatThrow = (t: ThrowRecord) => {
@@ -518,6 +525,7 @@ export function MatchScoring({
                   requireDoubleOut={requireDoubleOut}
                   dartsThrown={currentThrows.length}
                   lockedSuggestion={lockedCheckoutSuggestion}
+                  suggestionLockedAtThrow={suggestionLockedAtThrow}
                 />
               )}
             </div>
@@ -535,6 +543,7 @@ export function MatchScoring({
                   requireDoubleOut={requireDoubleOut}
                   dartsThrown={currentThrows.length}
                   lockedSuggestion={lockedCheckoutSuggestion}
+                  suggestionLockedAtThrow={suggestionLockedAtThrow}
                 />
               )}
             </div>
