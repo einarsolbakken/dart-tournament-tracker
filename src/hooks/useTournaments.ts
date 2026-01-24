@@ -16,6 +16,7 @@ export interface Tournament {
   knockout_sets_to_win: number;
   group_checkout_type: string;
   knockout_checkout_type: string;
+  show_checkout_suggestions: boolean;
   created_at: string;
 }
 
@@ -141,6 +142,7 @@ export function useCreateTournament() {
       knockoutSetsToWin = 3,
       groupCheckoutType = "single",
       knockoutCheckoutType = "double",
+      showCheckoutSuggestions = true,
     }: {
       name: string;
       date: string;
@@ -153,6 +155,7 @@ export function useCreateTournament() {
       knockoutSetsToWin?: number;
       groupCheckoutType?: string;
       knockoutCheckoutType?: string;
+      showCheckoutSuggestions?: boolean;
     }) => {
       // Determine the initial phase based on format
       const initialPhase = format === "league" ? "league" : "group_stage";
@@ -170,6 +173,7 @@ export function useCreateTournament() {
           knockout_sets_to_win: knockoutSetsToWin,
           group_checkout_type: groupCheckoutType,
           knockout_checkout_type: knockoutCheckoutType,
+          show_checkout_suggestions: showCheckoutSuggestions,
         })
         .select()
         .single();

@@ -22,6 +22,7 @@ interface MatchScoringProps {
   players: Player[];
   tournamentId: string;
   stage: "group" | "knockout";
+  showCheckoutSuggestions: boolean;
   onComplete: (winnerId: string, loserId: string, player1Sets: number, player2Sets: number, player1TotalScore: number, player1Darts: number, player2TotalScore: number, player2Darts: number) => void;
 }
 
@@ -67,6 +68,7 @@ export function MatchScoring({
   players,
   tournamentId,
   stage,
+  showCheckoutSuggestions,
   onComplete,
 }: MatchScoringProps) {
   const startingScore = 301;
@@ -519,12 +521,14 @@ export function MatchScoring({
           </div>
 
           {/* Checkout Suggestion */}
-          <CheckoutSuggestionDisplay
-            score={currentPlayerScore}
-            requireDoubleOut={requireDoubleOut}
-            dartsThrown={currentThrows.length}
-            lockedSuggestion={lockedCheckoutSuggestion}
-          />
+          {showCheckoutSuggestions && (
+            <CheckoutSuggestionDisplay
+              score={currentPlayerScore}
+              requireDoubleOut={requireDoubleOut}
+              dartsThrown={currentThrows.length}
+              lockedSuggestion={lockedCheckoutSuggestion}
+            />
+          )}
 
           {/* Current round */}
           <div className="bg-muted rounded-xl p-6">

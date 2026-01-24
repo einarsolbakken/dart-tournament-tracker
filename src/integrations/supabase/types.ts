@@ -180,6 +180,7 @@ export type Database = {
           knockout_checkout_type: string
           knockout_sets_to_win: number
           name: string
+          show_checkout_suggestions: boolean
           status: string
           tournament_format: string
         }
@@ -194,6 +195,7 @@ export type Database = {
           knockout_checkout_type?: string
           knockout_sets_to_win?: number
           name: string
+          show_checkout_suggestions?: boolean
           status?: string
           tournament_format?: string
         }
@@ -208,6 +210,7 @@ export type Database = {
           knockout_checkout_type?: string
           knockout_sets_to_win?: number
           name?: string
+          show_checkout_suggestions?: boolean
           status?: string
           tournament_format?: string
         }

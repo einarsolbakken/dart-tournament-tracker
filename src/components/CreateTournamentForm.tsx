@@ -40,6 +40,7 @@ export function CreateTournamentForm() {
   const [knockoutSetsToWin, setKnockoutSetsToWin] = useState<number>(3);
   const [groupCheckoutType, setGroupCheckoutType] = useState<string>("single");
   const [knockoutCheckoutType, setKnockoutCheckoutType] = useState<string>("double");
+  const [showCheckoutSuggestions, setShowCheckoutSuggestions] = useState<boolean>(true);
 
   const addPlayer = () => {
     setPlayerNames([...playerNames, ""]);
@@ -156,6 +157,7 @@ export function CreateTournamentForm() {
         knockoutSetsToWin,
         groupCheckoutType,
         knockoutCheckoutType,
+        showCheckoutSuggestions,
       });
       
       toast.success("Turnering opprettet!");
@@ -452,10 +454,45 @@ export function CreateTournamentForm() {
                   </div>
                 </div>
 
+                {/* Support Toggle */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Support</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={showCheckoutSuggestions ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowCheckoutSuggestions(true)}
+                      className={cn(
+                        "flex-1 transition-all",
+                        showCheckoutSuggestions && "shadow-md"
+                      )}
+                    >
+                      På
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={!showCheckoutSuggestions ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowCheckoutSuggestions(false)}
+                      className={cn(
+                        "flex-1 transition-all",
+                        !showCheckoutSuggestions && "shadow-md"
+                      )}
+                    >
+                      Av
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Vis checkout-forslag under kamper
+                  </p>
+                </div>
+
                 {/* Rules Summary */}
                 <div className="pt-3 border-t border-border/30 text-xs text-muted-foreground space-y-1">
                   <p><span className="text-foreground font-medium">{tournamentFormat === "group" ? "Gruppespill" : "Liga"}:</span> {gameMode}, {groupCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {groupSetsToWin}</p>
                   <p><span className="text-foreground font-medium">Sluttspill:</span> {gameMode}, {knockoutCheckoutType === "single" ? "single" : "dobbel"} checkout, first to {knockoutSetsToWin}</p>
+                  <p><span className="text-foreground font-medium">Support:</span> {showCheckoutSuggestions ? "på" : "av"}</p>
                 </div>
               </CardContent>
             </Card>
