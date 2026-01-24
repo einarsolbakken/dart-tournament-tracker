@@ -5,6 +5,7 @@ interface CheckoutSuggestionProps {
   requireDoubleOut: boolean;
   dartsThrown: number;
   lockedSuggestion: string[] | null;
+  suggestionLockedAtThrow: number;
 }
 
 export function CheckoutSuggestionDisplay({
@@ -12,10 +13,14 @@ export function CheckoutSuggestionDisplay({
   requireDoubleOut,
   dartsThrown,
   lockedSuggestion,
+  suggestionLockedAtThrow,
 }: CheckoutSuggestionProps) {
+  // Calculate how many darts into the suggestion we are
+  const dartsIntoSuggestion = dartsThrown - suggestionLockedAtThrow;
+
   // If we have a locked suggestion, show remaining darts from that
   if (lockedSuggestion && lockedSuggestion.length > 0) {
-    const remainingDarts = lockedSuggestion.slice(dartsThrown);
+    const remainingDarts = lockedSuggestion.slice(dartsIntoSuggestion);
     
     if (remainingDarts.length === 0) {
       return null;
