@@ -23,6 +23,7 @@ interface ScoreDialogProps {
   match: Match | null;
   players: Player[];
   tournamentId: string;
+  showCheckoutSuggestions: boolean;
   onClose: () => void;
 }
 
@@ -30,6 +31,7 @@ export function ScoreDialog({
   match,
   players,
   tournamentId,
+  showCheckoutSuggestions,
   onClose,
 }: ScoreDialogProps) {
   const updateGroupMatch = useUpdateGroupMatch();
@@ -111,6 +113,7 @@ export function ScoreDialog({
             players={players}
             tournamentId={tournamentId}
             stage={isGroupStage ? "group" : "knockout"}
+            showCheckoutSuggestions={showCheckoutSuggestions}
             onComplete={handleComplete}
           />
         </DialogContent>

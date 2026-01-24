@@ -222,6 +222,7 @@ const TournamentView = () => {
           match={selectedMatch}
           players={players || []}
           tournamentId={id || ""}
+          showCheckoutSuggestions={tournament?.show_checkout_suggestions ?? true}
           onClose={() => setSelectedMatch(null)}
         />
 
