@@ -504,31 +504,41 @@ export function MatchScoring({
         <div className="xl:w-1/2 space-y-6">
           {/* Scoreboard */}
           <div className="grid grid-cols-2 gap-6">
-            <PlayerScoreCard
-              name={player1?.name || "Spiller 1"}
-              score={player1Score}
-              sets={player1Sets}
-              isActive={currentPlayer === 1}
-              setsToWin={setsToWin}
-            />
-            <PlayerScoreCard
-              name={player2?.name || "Spiller 2"}
-              score={player2Score}
-              sets={player2Sets}
-              isActive={currentPlayer === 2}
-              setsToWin={setsToWin}
-            />
+            <div className="space-y-2">
+              <PlayerScoreCard
+                name={player1?.name || "Spiller 1"}
+                score={player1Score}
+                sets={player1Sets}
+                isActive={currentPlayer === 1}
+                setsToWin={setsToWin}
+              />
+              {showCheckoutSuggestions && currentPlayer === 1 && (
+                <CheckoutSuggestionDisplay
+                  score={currentPlayerScore}
+                  requireDoubleOut={requireDoubleOut}
+                  dartsThrown={currentThrows.length}
+                  lockedSuggestion={lockedCheckoutSuggestion}
+                />
+              )}
+            </div>
+            <div className="space-y-2">
+              <PlayerScoreCard
+                name={player2?.name || "Spiller 2"}
+                score={player2Score}
+                sets={player2Sets}
+                isActive={currentPlayer === 2}
+                setsToWin={setsToWin}
+              />
+              {showCheckoutSuggestions && currentPlayer === 2 && (
+                <CheckoutSuggestionDisplay
+                  score={currentPlayerScore}
+                  requireDoubleOut={requireDoubleOut}
+                  dartsThrown={currentThrows.length}
+                  lockedSuggestion={lockedCheckoutSuggestion}
+                />
+              )}
+            </div>
           </div>
-
-          {/* Checkout Suggestion */}
-          {showCheckoutSuggestions && (
-            <CheckoutSuggestionDisplay
-              score={currentPlayerScore}
-              requireDoubleOut={requireDoubleOut}
-              dartsThrown={currentThrows.length}
-              lockedSuggestion={lockedCheckoutSuggestion}
-            />
-          )}
 
           {/* Current round */}
           <div className="bg-muted rounded-xl p-6">
