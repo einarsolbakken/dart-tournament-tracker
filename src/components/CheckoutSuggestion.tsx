@@ -1,5 +1,4 @@
-import { getCheckoutSuggestion, getDartColorClass, formatDartDisplay } from "@/lib/checkoutChart";
-import { cn } from "@/lib/utils";
+import { getCheckoutSuggestion, formatDartDisplay } from "@/lib/checkoutChart";
 
 interface CheckoutSuggestionProps {
   score: number;
@@ -23,29 +22,18 @@ export function CheckoutSuggestionDisplay({
     }
 
     return (
-      <div className="bg-accent/20 border border-accent/30 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-300">
-        <div className="text-sm text-muted-foreground mb-2 text-center">
-          Forslag til checkout
-        </div>
-        <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-center">
+        <div className="flex items-center bg-accent/80 rounded overflow-hidden">
           {remainingDarts.map((dart, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <div
-                className={cn(
-                  "px-4 py-2 rounded-lg font-bold text-lg shadow-sm",
-                  getDartColorClass(dart)
-                )}
-              >
+            <div key={index} className="flex items-center">
+              <div className="px-3 py-1.5 font-bold text-sm text-accent-foreground tracking-wide">
                 {formatDartDisplay(dart)}
               </div>
               {index < remainingDarts.length - 1 && (
-                <span className="text-muted-foreground text-lg">→</span>
+                <div className="w-px h-5 bg-accent-foreground/30" />
               )}
             </div>
           ))}
-        </div>
-        <div className="text-xs text-muted-foreground mt-2 text-center">
-          {requireDoubleOut ? "Dobbel checkout påkrevd" : "Single checkout"}
         </div>
       </div>
     );
@@ -59,29 +47,18 @@ export function CheckoutSuggestionDisplay({
   }
 
   return (
-    <div className="bg-accent/20 border border-accent/30 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-300">
-      <div className="text-sm text-muted-foreground mb-2 text-center">
-        Forslag til checkout
-      </div>
-      <div className="flex items-center justify-center gap-2">
+    <div className="flex items-center justify-center">
+      <div className="flex items-center bg-accent/80 rounded overflow-hidden">
         {suggestion.darts.map((dart, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <div
-              className={cn(
-                "px-4 py-2 rounded-lg font-bold text-lg shadow-sm",
-                getDartColorClass(dart)
-              )}
-            >
+          <div key={index} className="flex items-center">
+            <div className="px-3 py-1.5 font-bold text-sm text-accent-foreground tracking-wide">
               {formatDartDisplay(dart)}
             </div>
             {index < suggestion.darts.length - 1 && (
-              <span className="text-muted-foreground text-lg">→</span>
+              <div className="w-px h-5 bg-accent-foreground/30" />
             )}
           </div>
         ))}
-      </div>
-      <div className="text-xs text-muted-foreground mt-2 text-center">
-        {requireDoubleOut ? "Dobbel checkout påkrevd" : "Single checkout"}
       </div>
     </div>
   );
