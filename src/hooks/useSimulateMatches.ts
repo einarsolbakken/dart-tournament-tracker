@@ -183,13 +183,14 @@ export function useSimulateStageMatches() {
         .from("matches")
         .select("*")
         .eq("tournament_id", tournamentId)
-        .eq("stage", stage);
+        .in("stage", ["group", "league"]);
 
       const allDone = allStageMatches?.every(m => m.status === "completed" || m.status === "skipped");
 
       if (allDone && allStageMatches && allStageMatches.length > 0) {
         // Trigger knockout phase initialization
-        await startKnockoutPhase(tournamentId, stage === "league");
+        const isLeague = allStageMatches[0].stage === "league";
+        await startKnockoutPhase(tournamentId, isLeague);
       }
 
       return { simulatedCount };
