@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Trophy, XCircle, SkipForward } from "lucide-react";
+import { Trophy, SkipForward } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -70,6 +70,32 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch, on
 
   // Calculate knockout size for dead rubber detection
   const knockoutSize = getKnockoutSize(players.length);
+  
+  // Calculate how many players advance from groups
+  // With 14 players and 4 groups, we need 8 to advance (quarterfinal)
+  const advancingCount = knockoutSize;
+  
+  // Get all players sorted by performance to determine who advances
+  const allPlayersSorted = [...players]
+    .filter(p => p.group_name)
+    .sort((a, b) => {
+      if (b.group_points !== a.group_points) {
+        return b.group_points - a.group_points;
+      }
+      const aSetDiff = (a.group_sets_won || 0) - (a.group_sets_lost || 0);
+      const bSetDiff = (b.group_sets_won || 0) - (b.group_sets_lost || 0);
+      if (bSetDiff !== aSetDiff) {
+        return bSetDiff - aSetDiff;
+      }
+      const aAvg = a.total_darts > 0 ? (a.total_score / a.total_darts) * 3 : 0;
+      const bAvg = b.total_darts > 0 ? (b.total_score / b.total_darts) * 3 : 0;
+      return bAvg - aAvg;
+    });
+  
+  // Determine which players would be eliminated (only relevant when all matches done)
+  const advancingPlayerIds = allGroupMatchesCompleted 
+    ? new Set(allPlayersSorted.slice(0, advancingCount).map(p => p.id))
+    : new Set<string>();
 
   // Prepare player standings for dead rubber detection
   const playerStandings = players.map(p => ({
@@ -142,7 +168,6 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch, on
                   </thead>
                   <tbody>
                     {groupPlayers.map((player, index) => {
-                      const isLast = index === groupPlayers.length - 1;
                       const playerMatches = matches.filter(
                         m => m.group_name === groupName && 
                         m.status === "completed" && 
@@ -157,27 +182,29 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch, on
                       const countryGradient = player.country ? getCountryGradient(player.country) : undefined;
                       const countryFlag = player.country ? getCountryFlag(player.country) : "";
                       
+                      // Check if this player is eliminated (doesn't advance)
+                      const isEliminated = allGroupMatchesCompleted && !advancingPlayerIds.has(player.id);
+                      
                       return (
                         <tr 
                           key={player.id}
                           className={cn(
                             "border-b border-border/50 last:border-0",
-                            isLast && completedMatches === totalMatches && "bg-destructive/10",
-                            player.is_eliminated && "opacity-50"
+                            isEliminated && "bg-destructive/10"
                           )}
-                          style={countryGradient ? { background: countryGradient } : undefined}
+                          style={countryGradient && !isEliminated ? { background: countryGradient } : undefined}
                         >
                           <td className="py-2 px-3 text-muted-foreground">{index + 1}</td>
                           <td className="py-2 px-3 font-medium">
                             {player.name.length > NAME_TRUNCATE_THRESHOLD ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <span className="flex items-center gap-2 max-w-[140px]">
+                                  <span className={cn(
+                                    "flex items-center gap-2 max-w-[140px]",
+                                    isEliminated && "text-muted-foreground"
+                                  )}>
                                     {countryFlag && <span className="text-sm shrink-0">{countryFlag}</span>}
                                     <span className="truncate">{player.name}</span>
-                                    {player.is_eliminated && (
-                                      <XCircle className="w-3 h-3 text-destructive flex-shrink-0" />
-                                    )}
                                   </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -185,19 +212,19 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch, on
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
-                              <span className="flex items-center gap-2 max-w-[140px]">
+                              <span className={cn(
+                                "flex items-center gap-2 max-w-[140px]",
+                                isEliminated && "text-muted-foreground"
+                              )}>
                                 {countryFlag && <span className="text-sm shrink-0">{countryFlag}</span>}
                                 <span className="truncate">{player.name}</span>
-                                {player.is_eliminated && (
-                                  <XCircle className="w-3 h-3 text-destructive flex-shrink-0" />
-                                )}
                               </span>
                             )}
                           </td>
                           <td className="text-center py-2 px-1 font-bold">{matchesPlayed}</td>
-                          <td className="text-center py-2 px-1 text-green-500">{wins}</td>
-                          <td className="text-center py-2 px-1 text-red-500">{losses}</td>
-                          <td className="text-center py-2 px-3 text-xs font-medium">
+                          <td className={cn("text-center py-2 px-1", isEliminated ? "text-muted-foreground" : "text-green-500")}>{wins}</td>
+                          <td className={cn("text-center py-2 px-1", isEliminated ? "text-muted-foreground" : "text-destructive")}>{losses}</td>
+                          <td className={cn("text-center py-2 px-3 text-xs font-medium", isEliminated && "text-muted-foreground")}>
                             {avgDisplay}
                           </td>
                         </tr>
