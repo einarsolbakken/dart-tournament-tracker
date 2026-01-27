@@ -1,31 +1,52 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { TournamentBracket } from "@/components/TournamentBracket";
 import { GroupStandings } from "@/components/GroupStandings";
 import { LeagueStandings } from "@/components/LeagueStandings";
 import { ScoreDialog } from "@/components/ScoreDialog";
 import { EditMatchDialog } from "@/components/EditMatchDialog";
-import { useTournament, usePlayers, useMatches, useSkipMatch, Match } from "@/hooks/useTournaments";
+import { useTournament, usePlayers, useMatches, useSkipMatch, useDeleteTournament, Match } from "@/hooks/useTournaments";
 import { useSimulateStageMatches } from "@/hooks/useSimulateMatches";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Target, Trophy, Users, Swords, LayoutGrid, Zap } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Calendar, Target, Trophy, Users, Swords, LayoutGrid, Zap, MoreVertical, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { toast } from "sonner";
 
 const TournamentView = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: tournament, isLoading: tournamentLoading } = useTournament(id || "");
   const { data: players } = usePlayers(id || "");
   const { data: matches } = useMatches(id || "");
   const skipMatch = useSkipMatch();
   const simulateMatches = useSimulateStageMatches();
+  const deleteTournament = useDeleteTournament();
   
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [editMatch, setEditMatch] = useState<Match | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showSimulateDialog, setShowSimulateDialog] = useState(false);
 
   if (tournamentLoading) {
     return (
@@ -71,6 +92,7 @@ const TournamentView = () => {
 
   const handleSimulateAll = () => {
     if (!tournament || !id) return;
+    setShowSimulateDialog(false);
     
     const stage = isLeagueFormat ? "league" : "group";
     const gameMode = parseInt(tournament.game_mode) || 301;
@@ -87,6 +109,18 @@ const TournamentView = () => {
         },
       }
     );
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    try {
+      await deleteTournament.mutateAsync(id);
+      toast.success("Turnering slettet");
+      navigate("/active");
+    } catch (error) {
+      toast.error("Kunne ikke slette turnering");
+    }
+    setShowDeleteDialog(false);
   };
 
   // Find winner if tournament is completed
@@ -119,6 +153,38 @@ const TournamentView = () => {
                 Tilbake
               </Button>
             </Link>
+            
+            {/* Tournament Menu */}
+            <div className="absolute right-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {canSimulate && (
+                    <>
+                      <DropdownMenuItem 
+                        onClick={() => setShowSimulateDialog(true)}
+                        disabled={simulateMatches.isPending}
+                      >
+                        <Zap className="w-4 h-4 mr-2" />
+                        Simuler alle kamper ({pendingStageMatches.length})
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem 
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Slett turnering
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
           {/* Tournament Header */}
@@ -181,24 +247,6 @@ const TournamentView = () => {
                 )}
               </TabsTrigger>
             </TabsList>
-            
-            {/* Simulate Button */}
-            {canSimulate && (
-              <div className="flex justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSimulateAll}
-                  disabled={simulateMatches.isPending}
-                  className="gap-2"
-                >
-                  <Zap className="w-4 h-4" />
-                  {simulateMatches.isPending 
-                    ? "Simulerer..." 
-                    : `Simuler alle kamper (${pendingStageMatches.length})`}
-                </Button>
-              </div>
-            )}
 
             <TabsContent value="stage">
               {players && isLeagueFormat ? (
@@ -278,6 +326,46 @@ const TournamentView = () => {
           tournamentId={id || ""}
           onClose={() => setEditMatch(null)}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Slett turnering?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Er du sikker på at du vil slette "{tournament.name}"? Dette kan ikke angres.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDelete} 
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Slett
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Simulate Confirmation Dialog */}
+        <AlertDialog open={showSimulateDialog} onOpenChange={setShowSimulateDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Simuler alle kamper?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Dette vil simulere {pendingStageMatches.length} ventende kamper med tilfeldige resultater. 
+                Bruk dette kun for testing. Handlingen kan ikke angres.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSimulateAll}>
+                Simuler
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
