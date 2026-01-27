@@ -7,10 +7,11 @@ import { LeagueStandings } from "@/components/LeagueStandings";
 import { ScoreDialog } from "@/components/ScoreDialog";
 import { EditMatchDialog } from "@/components/EditMatchDialog";
 import { useTournament, usePlayers, useMatches, useSkipMatch, Match } from "@/hooks/useTournaments";
+import { useSimulateStageMatches } from "@/hooks/useSimulateMatches";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Target, Trophy, Users, Swords, LayoutGrid } from "lucide-react";
+import { ArrowLeft, Calendar, Target, Trophy, Users, Swords, LayoutGrid, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ const TournamentView = () => {
   const { data: players } = usePlayers(id || "");
   const { data: matches } = useMatches(id || "");
   const skipMatch = useSkipMatch();
+  const simulateMatches = useSimulateStageMatches();
   
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [editMatch, setEditMatch] = useState<Match | null>(null);
@@ -60,6 +62,32 @@ const TournamentView = () => {
   const isGroupStage = tournament.current_phase === "group_stage";
   const isLeagueStage = tournament.current_phase === "league";
   const isKnockoutStage = tournament.current_phase === "knockout" || tournament.current_phase === "completed";
+
+  // Check if there are pending matches in the current stage
+  const pendingStageMatches = isLeagueFormat
+    ? leagueMatches.filter(m => m.status === "pending")
+    : groupMatches.filter(m => m.status === "pending");
+  const canSimulate = (isGroupStage || isLeagueStage) && pendingStageMatches.length > 0;
+
+  const handleSimulateAll = () => {
+    if (!tournament || !id) return;
+    
+    const stage = isLeagueFormat ? "league" : "group";
+    const gameMode = parseInt(tournament.game_mode) || 301;
+    
+    simulateMatches.mutate(
+      { tournamentId: id, stage, gameMode },
+      {
+        onSuccess: (result) => {
+          toast.success(`Simulerte ${result.simulatedCount} kamper`);
+        },
+        onError: (error) => {
+          toast.error("Kunne ikke simulere kamper");
+          console.error(error);
+        },
+      }
+    );
+  };
 
   // Find winner if tournament is completed
   const winner = tournament.status === "completed" && knockoutMatches.length > 0 && players
@@ -153,6 +181,24 @@ const TournamentView = () => {
                 )}
               </TabsTrigger>
             </TabsList>
+            
+            {/* Simulate Button */}
+            {canSimulate && (
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSimulateAll}
+                  disabled={simulateMatches.isPending}
+                  className="gap-2"
+                >
+                  <Zap className="w-4 h-4" />
+                  {simulateMatches.isPending 
+                    ? "Simulerer..." 
+                    : `Simuler alle kamper (${pendingStageMatches.length})`}
+                </Button>
+              </div>
+            )}
 
             <TabsContent value="stage">
               {players && isLeagueFormat ? (
