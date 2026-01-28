@@ -75,18 +75,23 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch, on
   // With 14 players and 4 groups, we need 8 to advance (quarterfinal)
   const advancingCount = knockoutSize;
   
+  // Helper to get wins for a player
+  const completedGroupMatches = matches.filter(m => m.stage === "group" && m.status === "completed");
+  const getPlayerWins = (playerId: string) => {
+    return completedGroupMatches.filter(m => m.winner_id === playerId).length;
+  };
+
   // Get all players sorted by performance to determine who advances
   const allPlayersSorted = [...players]
     .filter(p => p.group_name)
     .sort((a, b) => {
-      if (b.group_points !== a.group_points) {
-        return b.group_points - a.group_points;
+      // 1. Sort by wins first
+      const aWins = getPlayerWins(a.id);
+      const bWins = getPlayerWins(b.id);
+      if (bWins !== aWins) {
+        return bWins - aWins;
       }
-      const aSetDiff = (a.group_sets_won || 0) - (a.group_sets_lost || 0);
-      const bSetDiff = (b.group_sets_won || 0) - (b.group_sets_lost || 0);
-      if (bSetDiff !== aSetDiff) {
-        return bSetDiff - aSetDiff;
-      }
+      // 2. Then by average as tiebreaker
       const aAvg = a.total_darts > 0 ? (a.total_score / a.total_darts) * 3 : 0;
       const bAvg = b.total_darts > 0 ? (b.total_score / b.total_darts) * 3 : 0;
       return bAvg - aAvg;
@@ -121,20 +126,23 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch, on
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {groupNames.map(groupName => {
+          // Get group matches to calculate actual wins
+          const groupMatchesForSort = matches.filter(m => m.group_name === groupName && m.status === "completed");
+          
+          const getPlayerWins = (playerId: string) => {
+            return groupMatchesForSort.filter(m => m.winner_id === playerId).length;
+          };
+          
           const groupPlayers = players
             .filter(p => p.group_name === groupName)
             .sort((a, b) => {
-              // 1. Sort by points first
-              if (b.group_points !== a.group_points) {
-                return b.group_points - a.group_points;
+              // 1. Sort by wins first (most wins = highest rank)
+              const aWins = getPlayerWins(a.id);
+              const bWins = getPlayerWins(b.id);
+              if (bWins !== aWins) {
+                return bWins - aWins;
               }
-              // 2. Then by sets difference
-              const aSetDiff = (a.group_sets_won || 0) - (a.group_sets_lost || 0);
-              const bSetDiff = (b.group_sets_won || 0) - (b.group_sets_lost || 0);
-              if (bSetDiff !== aSetDiff) {
-                return bSetDiff - aSetDiff;
-              }
-              // 3. Then by average (higher is better)
+              // 2. Then by average (higher is better) as tiebreaker
               const aAvg = a.total_darts > 0 ? (a.total_score / a.total_darts) * 3 : 0;
               const bAvg = b.total_darts > 0 ? (b.total_score / b.total_darts) * 3 : 0;
               return bAvg - aAvg;

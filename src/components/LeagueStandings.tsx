@@ -19,26 +19,27 @@ interface LeagueStandingsProps {
 const NAME_TRUNCATE_THRESHOLD = 12;
 
 export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, onSkipMatch }: LeagueStandingsProps) {
+  // Helper to get wins for a player from completed matches
+  const completedMatches = matches.filter(m => m.status === "completed");
+  const getPlayerWins = (playerId: string) => {
+    return completedMatches.filter(m => m.winner_id === playerId).length;
+  };
+
   // Sort players by league standings
   const sortedPlayers = [...players].sort((a, b) => {
-    // 1. Sort by points first
-    if ((b.group_points || 0) !== (a.group_points || 0)) {
-      return (b.group_points || 0) - (a.group_points || 0);
+    // 1. Sort by wins first (most wins = highest rank)
+    const aWins = getPlayerWins(a.id);
+    const bWins = getPlayerWins(b.id);
+    if (bWins !== aWins) {
+      return bWins - aWins;
     }
-    // 2. Then by sets difference
-    const aSetDiff = (a.group_sets_won || 0) - (a.group_sets_lost || 0);
-    const bSetDiff = (b.group_sets_won || 0) - (b.group_sets_lost || 0);
-    if (bSetDiff !== aSetDiff) {
-      return bSetDiff - aSetDiff;
-    }
-    // 3. Then by average (higher is better)
+    // 2. Then by average (higher is better) as tiebreaker
     const aAvg = (a.total_darts || 0) > 0 ? ((a.total_score || 0) / (a.total_darts || 1)) * 3 : 0;
     const bAvg = (b.total_darts || 0) > 0 ? ((b.total_score || 0) / (b.total_darts || 1)) * 3 : 0;
     return bAvg - aAvg;
   });
 
-  // Count completed and pending matches
-  const completedMatches = matches.filter(m => m.status === "completed");
+  // Count pending matches (completedMatches already defined above)
   const pendingMatches = matches.filter(m => m.status === "pending");
   const skippedMatches = matches.filter(m => m.status === "skipped");
   const allCompleted = pendingMatches.length === 0;
