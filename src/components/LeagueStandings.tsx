@@ -5,7 +5,7 @@ import { Trophy, Medal, Edit3, CheckCircle2, SkipForward } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
-import { getCountryFlag, getCountryGradient } from "./CountryFlagPicker";
+import { getCountryFlag } from "./CountryFlagPicker";
 import { isDeadRubberMatch, getKnockoutSize } from "@/lib/deadRubberDetection";
 
 interface LeagueStandingsProps {
@@ -115,10 +115,9 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
               <TableRow>
                 <TableHead className="w-12">#</TableHead>
                 <TableHead>Spiller</TableHead>
-                <TableHead className="text-center w-16">P</TableHead>
-                <TableHead className="text-center w-20">S+</TableHead>
-                <TableHead className="text-center w-20">S-</TableHead>
-                <TableHead className="text-center w-20">+/-</TableHead>
+                <TableHead className="text-center w-16">K</TableHead>
+                <TableHead className="text-center w-16">V</TableHead>
+                <TableHead className="text-center w-16">T</TableHead>
                 <TableHead className="text-center w-20">Avg</TableHead>
               </TableRow>
             </TableHeader>
@@ -129,16 +128,18 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
                 const avg = (player.total_darts || 0) > 0 
                   ? ((player.total_score || 0) / (player.total_darts || 1)) * 3 
                   : 0;
-                const setDiff = (player.group_sets_won || 0) - (player.group_sets_lost || 0);
                 
-                const countryGradient = player.country ? getCountryGradient(player.country) : undefined;
                 const countryFlag = player.country ? getCountryFlag(player.country) : "";
+                
+                // Calculate matches played, wins, losses from sets
+                const wins = player.group_sets_won || 0;
+                const losses = player.group_sets_lost || 0;
+                const matchesPlayed = wins + losses > 0 ? Math.ceil((wins + losses) / 2) : 0;
                 
                 return (
                   <TableRow 
                     key={player.id}
                     className={willAdvance ? "bg-primary/5" : player.is_eliminated ? "bg-destructive/5" : ""}
-                    style={countryGradient ? { background: countryGradient } : undefined}
                   >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-1">
@@ -157,14 +158,9 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-center font-bold">{player.group_points || 0}</TableCell>
-                    <TableCell className="text-center text-green-600">{player.group_sets_won || 0}</TableCell>
-                    <TableCell className="text-center text-red-600">{player.group_sets_lost || 0}</TableCell>
-                    <TableCell className="text-center">
-                      <span className={setDiff > 0 ? "text-green-600" : setDiff < 0 ? "text-red-600" : ""}>
-                        {setDiff > 0 ? "+" : ""}{setDiff}
-                      </span>
-                    </TableCell>
+                    <TableCell className="text-center">{matchesPlayed}</TableCell>
+                    <TableCell className="text-center text-green-600">{wins}</TableCell>
+                    <TableCell className="text-center text-red-600">{losses}</TableCell>
                     <TableCell className="text-center">{avg.toFixed(1)}</TableCell>
                   </TableRow>
                 );
