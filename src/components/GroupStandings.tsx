@@ -71,9 +71,8 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch, on
   // Calculate knockout size for dead rubber detection
   const knockoutSize = getKnockoutSize(players.length);
   
-  // Calculate how many players advance from groups
-  // With 14 players and 4 groups, we need 8 to advance (quarterfinal)
-  const advancingCount = knockoutSize;
+  // Number of players that advance from each group (always top 2)
+  const advancingPerGroup = 2;
   
   // Helper to get wins for a player
   const completedGroupMatches = matches.filter(m => m.stage === "group" && m.status === "completed");
@@ -81,26 +80,30 @@ export function GroupStandings({ players, matches, onMatchClick, onEditMatch, on
     return completedGroupMatches.filter(m => m.winner_id === playerId).length;
   };
 
-  // Get all players sorted by performance to determine who advances
-  const allPlayersSorted = [...players]
-    .filter(p => p.group_name)
-    .sort((a, b) => {
-      // 1. Sort by wins first
-      const aWins = getPlayerWins(a.id);
-      const bWins = getPlayerWins(b.id);
-      if (bWins !== aWins) {
-        return bWins - aWins;
-      }
-      // 2. Then by average as tiebreaker
-      const aAvg = a.total_darts > 0 ? (a.total_score / a.total_darts) * 3 : 0;
-      const bAvg = b.total_darts > 0 ? (b.total_score / b.total_darts) * 3 : 0;
-      return bAvg - aAvg;
-    });
+  // For each group, determine who advances (top 2 from each group)
+  const advancingPlayerIds = new Set<string>();
   
-  // Determine which players would be eliminated (only relevant when all matches done)
-  const advancingPlayerIds = allGroupMatchesCompleted 
-    ? new Set(allPlayersSorted.slice(0, advancingCount).map(p => p.id))
-    : new Set<string>();
+  if (allGroupMatchesCompleted) {
+    groupNames.forEach(groupName => {
+      const groupPlayers = players
+        .filter(p => p.group_name === groupName)
+        .sort((a, b) => {
+          // 1. Sort by wins first
+          const aWins = getPlayerWins(a.id);
+          const bWins = getPlayerWins(b.id);
+          if (bWins !== aWins) {
+            return bWins - aWins;
+          }
+          // 2. Then by average as tiebreaker
+          const aAvg = a.total_darts > 0 ? (a.total_score / a.total_darts) * 3 : 0;
+          const bAvg = b.total_darts > 0 ? (b.total_score / b.total_darts) * 3 : 0;
+          return bAvg - aAvg;
+        });
+      
+      // Top 2 from this group advance
+      groupPlayers.slice(0, advancingPerGroup).forEach(p => advancingPlayerIds.add(p.id));
+    });
+  }
 
   // Prepare player standings for dead rubber detection
   const playerStandings = players.map(p => ({
