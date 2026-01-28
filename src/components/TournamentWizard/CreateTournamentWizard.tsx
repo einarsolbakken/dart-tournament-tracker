@@ -347,11 +347,6 @@ export function CreateTournamentWizard() {
           </Button>
         )}
       </div>
-
-      {/* Step hint */}
-      <p className="text-center text-sm text-muted-foreground mt-4">
-        Steg {currentStep} av 4
-      </p>
     </div>
   );
 }
