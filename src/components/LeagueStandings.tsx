@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Edit3, CheckCircle2, SkipForward } from "lucide-react";
+import { Trophy, Medal, CheckCircle2, SkipForward } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
@@ -204,7 +204,6 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
               const isCompleted = match.status === "completed";
               const isSkipped = match.status === "skipped";
               const isPending = match.status === "pending";
-              const winner = match.winner_id;
               
               // Check if this match is a dead rubber (only for pending matches)
               const deadRubberInfo = isPending ? isDeadRubberMatch(
@@ -223,84 +222,76 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
               return (
                 <div
                   key={match.id}
-                  className={`p-3 rounded-lg border transition-colors ${
+                  onClick={() => {
+                    if (isPending) {
+                      onMatchClick(match);
+                    } else if (isCompleted && onEditMatch) {
+                      onEditMatch(match);
+                    }
+                  }}
+                  className={`p-3 rounded-lg border transition-all ${
                     isCompleted 
-                      ? "bg-muted/30 hover:bg-muted/50 cursor-pointer" 
+                      ? "bg-muted/50 hover:border-accent cursor-pointer" 
                       : isSkipped
                       ? "bg-muted/20 opacity-60"
-                      : "bg-card hover:bg-muted/20 cursor-pointer"
+                      : "hover:border-primary cursor-pointer"
                   }`}
-                  onClick={() => isPending && onMatchClick(match)}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className={`text-sm truncate ${winner === player1?.id ? "font-bold text-primary" : ""}`}>
-                        {player1?.name || "TBD"}
-                      </div>
-                      <div className={`text-sm truncate ${winner === player2?.id ? "font-bold text-primary" : ""}`}>
-                        {player2?.name || "TBD"}
-                      </div>
+                  <div className="flex items-center text-sm gap-2">
+                    {/* Player 1 name */}
+                    <span className={`truncate flex-1 text-left ${
+                      match.winner_id === player1?.id ? "font-bold text-primary" : ""
+                    }`}>
+                      {player1?.name || "TBD"}
+                    </span>
+                    
+                    {/* Score or status in center */}
+                    <div className="flex flex-col items-center shrink-0">
+                      {isCompleted ? (
+                        <span className="font-bold">
+                          {match.player1_sets} - {match.player2_sets}
+                        </span>
+                      ) : isSkipped ? (
+                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                          <SkipForward className="w-3 h-3 mr-1" />
+                          Hoppet over
+                        </Badge>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-muted-foreground">vs</span>
+                          {deadRubberInfo.isDeadRubber && onSkipMatch && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onSkipMatch(match);
+                                    }}
+                                  >
+                                    <SkipForward className="w-3 h-3 mr-1" />
+                                    Hopp over
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{deadRubberInfo.reason}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      )}
                     </div>
                     
-                    {isCompleted ? (
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <div className={`text-sm ${winner === player1?.id ? "font-bold" : ""}`}>
-                            {match.player1_sets}
-                          </div>
-                          <div className={`text-sm ${winner === player2?.id ? "font-bold" : ""}`}>
-                            {match.player2_sets}
-                          </div>
-                        </div>
-                        {onEditMatch && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditMatch(match);
-                            }}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : isSkipped ? (
-                      <Badge variant="outline" className="text-xs text-muted-foreground">
-                        <SkipForward className="w-3 h-3 mr-1" />
-                        Hoppet over
-                      </Badge>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {deadRubberInfo.isDeadRubber && onSkipMatch && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSkipMatch(match);
-                                  }}
-                                >
-                                  <SkipForward className="w-3 h-3 mr-1" />
-                                  Hopp over
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{deadRubberInfo.reason}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        <Badge variant="outline" className="text-xs">
-                          Venter
-                        </Badge>
-                      </div>
-                    )}
+                    {/* Player 2 name */}
+                    <span className={`truncate flex-1 text-right ${
+                      match.winner_id === player2?.id ? "font-bold text-primary" : ""
+                    }`}>
+                      {player2?.name || "TBD"}
+                    </span>
                   </div>
                 </div>
               );
