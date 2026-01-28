@@ -1,12 +1,12 @@
 import { AppLayout } from "@/components/AppLayout";
-import { CreateTournamentForm } from "@/components/CreateTournamentForm";
+import { CreateTournamentWizard } from "@/components/TournamentWizard";
 
 const CreateTournament = () => {
   return (
     <AppLayout>
       <div className="min-h-screen bg-background">
         <main className="py-6">
-          <CreateTournamentForm />
+          <CreateTournamentWizard />
         </main>
       </div>
     </AppLayout>
