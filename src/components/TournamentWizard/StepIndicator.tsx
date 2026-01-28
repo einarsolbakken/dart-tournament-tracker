@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface Step {
   number: number;
@@ -20,7 +19,7 @@ export function StepIndicator({ steps, currentStep, onStepClick }: StepIndicator
         <div key={step.number} className="flex items-center">
           {/* Step Circle */}
           <div className="flex flex-col items-center">
-            <motion.button
+            <button
               type="button"
               onClick={() => onStepClick?.(step.number)}
               disabled={step.number > currentStep}
@@ -39,62 +38,41 @@ export function StepIndicator({ steps, currentStep, onStepClick }: StepIndicator
                   "bg-muted/30 border-border/50 text-muted-foreground cursor-not-allowed"
                 ]
               )}
-              initial={false}
-              animate={{
-                scale: step.number === currentStep ? 1.1 : 1,
-              }}
-              whileHover={step.number <= currentStep ? { scale: step.number === currentStep ? 1.15 : 1.08 } : {}}
-              whileTap={step.number < currentStep ? { scale: 0.95 } : {}}
             >
               {step.number < currentStep ? (
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
+                <div className="animate-scale-in">
                   <Check className="w-5 h-5 sm:w-6 sm:h-6" />
-                </motion.div>
+                </div>
               ) : (
                 <span>{step.number}</span>
               )}
               
               {/* Pulse animation for current step */}
               {step.number === currentStep && (
-                <motion.div
-                  className="absolute inset-0 rounded-full border-2 border-primary"
-                  initial={{ scale: 1, opacity: 0.5 }}
-                  animate={{ scale: 1.5, opacity: 0 }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
+                <div className="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-30" />
               )}
-            </motion.button>
+            </button>
             
             {/* Label */}
-            <motion.span
+            <span
               className={cn(
-                "mt-2 text-xs sm:text-sm font-medium text-center max-w-[70px] sm:max-w-[80px] leading-tight",
-                step.number <= currentStep ? "text-foreground" : "text-muted-foreground"
+                "mt-2 text-xs sm:text-sm font-medium text-center max-w-[70px] sm:max-w-[80px] leading-tight transition-opacity duration-300",
+                step.number <= currentStep ? "text-foreground opacity-100" : "text-muted-foreground opacity-60"
               )}
-              initial={false}
-              animate={{
-                opacity: step.number <= currentStep ? 1 : 0.6,
-              }}
             >
               {step.label}
-            </motion.span>
+            </span>
           </div>
 
           {/* Connector Line */}
           {index < steps.length - 1 && (
             <div className="relative w-12 sm:w-20 md:w-28 h-0.5 mx-1 sm:mx-2 -mt-6">
               <div className="absolute inset-0 bg-border/50 rounded-full" />
-              <motion.div
-                className="absolute inset-0 bg-primary rounded-full origin-left"
-                initial={{ scaleX: 0 }}
-                animate={{ 
-                  scaleX: step.number < currentStep ? 1 : 0 
-                }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
+              <div
+                className={cn(
+                  "absolute inset-0 bg-primary rounded-full origin-left transition-transform duration-500 ease-out",
+                  step.number < currentStep ? "scale-x-100" : "scale-x-0"
+                )}
               />
             </div>
           )}
