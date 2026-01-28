@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCreateTournament } from "@/hooks/useTournaments";
@@ -29,7 +28,7 @@ export function CreateTournamentWizard() {
   const createTournament = useCreateTournament();
   
   const [currentStep, setCurrentStep] = useState(1);
-  const [direction, setDirection] = useState(0);
+  const [direction, setDirection] = useState<"left" | "right">("right");
   
   // Form state
   const [name, setName] = useState("");
@@ -112,21 +111,21 @@ export function CreateTournamentWizard() {
 
   const goNext = () => {
     if (currentStep < 4 && canGoNext()) {
-      setDirection(1);
+      setDirection("right");
       setCurrentStep(currentStep + 1);
     }
   };
 
   const goBack = () => {
     if (currentStep > 1) {
-      setDirection(-1);
+      setDirection("left");
       setCurrentStep(currentStep - 1);
     }
   };
 
   const goToStep = (step: number) => {
     if (step < currentStep) {
-      setDirection(-1);
+      setDirection("left");
       setCurrentStep(step);
     }
   };
@@ -192,19 +191,75 @@ export function CreateTournamentWizard() {
     );
   }
 
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
-    }),
+  const renderCurrentStep = () => {
+    const baseClasses = cn(
+      "animate-fade-in",
+      direction === "right" ? "animate-slide-in-right" : "animate-slide-in-left"
+    );
+
+    switch (currentStep) {
+      case 1:
+        return (
+          <div key="step-1" className={baseClasses}>
+            <TournamentInfoStep
+              name={name}
+              setName={setName}
+              date={date}
+              setDate={setDate}
+            />
+          </div>
+        );
+      case 2:
+        return (
+          <div key="step-2" className={baseClasses}>
+            <TournamentFormatStep
+              tournamentFormat={tournamentFormat}
+              setTournamentFormat={setTournamentFormat}
+            />
+          </div>
+        );
+      case 3:
+        return (
+          <div key="step-3" className={baseClasses}>
+            <GameRulesStep
+              tournamentFormat={tournamentFormat}
+              gameMode={gameMode}
+              setGameMode={setGameMode}
+              groupSetsToWin={groupSetsToWin}
+              setGroupSetsToWin={setGroupSetsToWin}
+              knockoutSetsToWin={knockoutSetsToWin}
+              setKnockoutSetsToWin={setKnockoutSetsToWin}
+              groupCheckoutType={groupCheckoutType}
+              setGroupCheckoutType={setGroupCheckoutType}
+              knockoutCheckoutType={knockoutCheckoutType}
+              setKnockoutCheckoutType={setKnockoutCheckoutType}
+              showCheckoutSuggestions={showCheckoutSuggestions}
+              setShowCheckoutSuggestions={setShowCheckoutSuggestions}
+            />
+          </div>
+        );
+      case 4:
+        return (
+          <div key="step-4" className={baseClasses}>
+            <PlayersStep
+              playerNames={playerNames}
+              playerCountries={playerCountries}
+              addPlayer={addPlayer}
+              removePlayer={removePlayer}
+              updatePlayerName={updatePlayerName}
+              updatePlayerCountry={updatePlayerCountry}
+              hasDuplicates={hasDuplicates}
+              duplicateNames={duplicateNames}
+              validPlayerCount={validPlayerCount}
+              tournamentFormat={tournamentFormat}
+              matchesPerPlayer={matchesPerPlayer}
+              setMatchesPerPlayer={setMatchesPerPlayer}
+            />
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -239,68 +294,7 @@ export function CreateTournamentWizard() {
       {/* Step Content */}
       <Card className="relative overflow-hidden border-border/30 bg-card/80 shadow-xl mt-6">
         <CardContent className="pt-8 pb-8 min-h-[400px]">
-          <AnimatePresence mode="wait" custom={direction}>
-            <motion.div
-              key={currentStep}
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 },
-              }}
-            >
-              {currentStep === 1 && (
-                <TournamentInfoStep
-                  name={name}
-                  setName={setName}
-                  date={date}
-                  setDate={setDate}
-                />
-              )}
-              {currentStep === 2 && (
-                <TournamentFormatStep
-                  tournamentFormat={tournamentFormat}
-                  setTournamentFormat={setTournamentFormat}
-                />
-              )}
-              {currentStep === 3 && (
-                <GameRulesStep
-                  tournamentFormat={tournamentFormat}
-                  gameMode={gameMode}
-                  setGameMode={setGameMode}
-                  groupSetsToWin={groupSetsToWin}
-                  setGroupSetsToWin={setGroupSetsToWin}
-                  knockoutSetsToWin={knockoutSetsToWin}
-                  setKnockoutSetsToWin={setKnockoutSetsToWin}
-                  groupCheckoutType={groupCheckoutType}
-                  setGroupCheckoutType={setGroupCheckoutType}
-                  knockoutCheckoutType={knockoutCheckoutType}
-                  setKnockoutCheckoutType={setKnockoutCheckoutType}
-                  showCheckoutSuggestions={showCheckoutSuggestions}
-                  setShowCheckoutSuggestions={setShowCheckoutSuggestions}
-                />
-              )}
-              {currentStep === 4 && (
-                <PlayersStep
-                  playerNames={playerNames}
-                  playerCountries={playerCountries}
-                  addPlayer={addPlayer}
-                  removePlayer={removePlayer}
-                  updatePlayerName={updatePlayerName}
-                  updatePlayerCountry={updatePlayerCountry}
-                  hasDuplicates={hasDuplicates}
-                  duplicateNames={duplicateNames}
-                  validPlayerCount={validPlayerCount}
-                  tournamentFormat={tournamentFormat}
-                  matchesPerPlayer={matchesPerPlayer}
-                  setMatchesPerPlayer={setMatchesPerPlayer}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
+          {renderCurrentStep()}
         </CardContent>
       </Card>
 
