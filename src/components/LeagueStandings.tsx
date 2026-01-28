@@ -131,10 +131,13 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
                 
                 const countryFlag = player.country ? getCountryFlag(player.country) : "";
                 
-                // Calculate matches played, wins, losses from sets
-                const wins = player.group_sets_won || 0;
-                const losses = player.group_sets_lost || 0;
-                const matchesPlayed = wins + losses > 0 ? Math.ceil((wins + losses) / 2) : 0;
+                // Calculate matches played, won, lost from actual match data
+                const playerMatches = matches.filter(
+                  m => m.status === "completed" && (m.player1_id === player.id || m.player2_id === player.id)
+                );
+                const matchesPlayed = playerMatches.length;
+                const matchesWon = playerMatches.filter(m => m.winner_id === player.id).length;
+                const matchesLost = matchesPlayed - matchesWon;
                 
                 return (
                   <TableRow 
@@ -159,8 +162,8 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
                       </div>
                     </TableCell>
                     <TableCell className="text-center">{matchesPlayed}</TableCell>
-                    <TableCell className="text-center text-green-600">{wins}</TableCell>
-                    <TableCell className="text-center text-red-600">{losses}</TableCell>
+                    <TableCell className="text-center text-green-600">{matchesWon}</TableCell>
+                    <TableCell className="text-center text-red-600">{matchesLost}</TableCell>
                     <TableCell className="text-center">{avg.toFixed(1)}</TableCell>
                   </TableRow>
                 );
