@@ -6,6 +6,7 @@ import { GroupStandings } from "@/components/GroupStandings";
 import { LeagueStandings } from "@/components/LeagueStandings";
 import { ScoreDialog } from "@/components/ScoreDialog";
 import { EditMatchDialog } from "@/components/EditMatchDialog";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useTournament, usePlayers, useMatches, useSkipMatch, useDeleteTournament, Match } from "@/hooks/useTournaments";
 import { useSimulateStageMatches } from "@/hooks/useSimulateMatches";
 import { Button } from "@/components/ui/button";
@@ -140,6 +141,17 @@ const TournamentView = () => {
       default: return tournament.current_phase;
     }
   };
+
+  // Show full-screen loading spinner while simulating
+  if (simulateMatches.isPending) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <LoadingSpinner message="Simulerer kamper..." />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
