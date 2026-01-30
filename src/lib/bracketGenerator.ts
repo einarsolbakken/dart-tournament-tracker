@@ -73,15 +73,16 @@ export function generateBracket(players: Player[]): Match[] {
   return matches;
 }
 
+// Standard seeding: 1 meets last, 2 meets second-to-last, etc.
+// For 8 players: 1v8, 2v7, 3v6, 4v5
 function getSeededOrder(size: number): number[] {
-  if (size === 2) return [0, 1];
-  
-  const smaller = getSeededOrder(size / 2);
+  // We want pairs: (0, size-1), (1, size-2), (2, size-3), ...
+  // So the order is: 0, 7, 1, 6, 2, 5, 3, 4 for size 8
   const result: number[] = [];
   
-  for (const pos of smaller) {
-    result.push(pos);
-    result.push(size - 1 - pos);
+  for (let i = 0; i < size / 2; i++) {
+    result.push(i);
+    result.push(size - 1 - i);
   }
   
   return result;

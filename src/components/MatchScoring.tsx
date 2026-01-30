@@ -23,6 +23,7 @@ interface MatchScoringProps {
   tournamentId: string;
   stage: "group" | "knockout";
   showCheckoutSuggestions: boolean;
+  checkoutType: string;
   onComplete: (winnerId: string, loserId: string, player1Sets: number, player2Sets: number, player1TotalScore: number, player1Darts: number, player2TotalScore: number, player2Darts: number) => void;
 }
 
@@ -70,11 +71,12 @@ export function MatchScoring({
   tournamentId,
   stage,
   showCheckoutSuggestions,
+  checkoutType,
   onComplete,
 }: MatchScoringProps) {
   const startingScore = 301;
   const setsToWin = stage === "group" ? 2 : 3; // First to 2 in group, first to 3 in knockout
-  const requireDoubleOut = stage === "knockout"; // Single checkout in group, double in knockout
+  const requireDoubleOut = checkoutType === "double";
   
   const player1 = players.find((p) => p.id === match.player1_id);
   const player2 = players.find((p) => p.id === match.player2_id);
