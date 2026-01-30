@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 interface DartBoardProps {
@@ -10,23 +10,6 @@ const SEGMENT_NUMBERS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11
 
 export function DartBoard({ onScore, disabled }: DartBoardProps) {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
-  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (disabled) return;
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (rect) {
-      setMousePos({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setMousePos(null);
-  };
 
   const segments = useMemo(() => {
     const segs: React.ReactNode[] = [];
@@ -124,31 +107,11 @@ export function DartBoard({ onScore, disabled }: DartBoardProps) {
   };
 
   return (
-    <div 
-      ref={containerRef}
-      className="relative w-full h-full flex flex-col items-center justify-center"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Custom dart cursor */}
-      {mousePos && !disabled && (
-        <img 
-          src="/images/dart-cursor.png" 
-          alt="" 
-          className="pointer-events-none absolute z-50 w-8 h-8 -translate-x-1/2 -translate-y-1/2"
-          style={{ 
-            left: mousePos.x, 
-            top: mousePos.y,
-            transform: 'translate(-50%, -50%) rotate(135deg)'
-          }}
-        />
-      )}
+    <div className="relative w-full h-full flex flex-col items-center justify-center">
       <svg 
         viewBox="0 0 400 400" 
-        className={cn(
-          "w-full max-w-[700px] xl:max-w-[800px] mx-auto",
-          !disabled && "cursor-none"
-        )}
+        className="w-full max-w-[700px] xl:max-w-[800px] mx-auto"
+        style={{ cursor: disabled ? 'not-allowed' : 'url(/images/dart-cursor.png) 4 4, crosshair' }}
       >
         {/* Outer ring background */}
         <circle cx="200" cy="200" r="180" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="1" />
