@@ -243,7 +243,8 @@ export function getCheckoutSuggestion(
 }
 
 // Get the color class for a dart description
-export function getDartColorClass(dart: string): string {
+export function getDartColorClass(dart: string | undefined | null): string {
+  if (!dart) return "bg-muted text-muted-foreground";
   if (dart.startsWith("T")) return "bg-red-500 text-white";
   if (dart.startsWith("D")) return "bg-green-600 text-white";
   if (dart === "Bull") return "bg-red-600 text-white";
@@ -252,7 +253,8 @@ export function getDartColorClass(dart: string): string {
 }
 
 // Format dart for display
-export function formatDartDisplay(dart: string): string {
+export function formatDartDisplay(dart: string | undefined | null): string {
+  if (!dart) return "";
   if (dart === "Bull") return "Bull";
   if (dart === "OB") return "OB";
   if (dart.startsWith("T")) return dart;
@@ -265,8 +267,11 @@ export function formatDartDisplay(dart: string): string {
 export function doesThrowMatchSuggestion(
   thrownScore: number,
   thrownMultiplier: number,
-  expectedDart: string
+  expectedDart: string | undefined | null
 ): boolean {
+  // Guard against undefined/null
+  if (!expectedDart) return false;
+  
   // Parse the expected dart
   if (expectedDart === "Bull") {
     return thrownScore === 50 && thrownMultiplier === 1;
