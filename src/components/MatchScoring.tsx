@@ -502,7 +502,7 @@ export function MatchScoring({
       {/* Kampinfo */}
       <div className="text-center text-sm text-muted-foreground mb-6">
         <span className="bg-muted px-4 py-2 rounded-full text-base">
-          {stage === "group" ? "Gruppespill" : "Sluttspill"} • 301 • 
+          {stage === "knockout" ? "Sluttspill" : (match.stage === "league" ? "Ligakamper" : "Gruppespill")} • 301 • 
           {requireDoubleOut ? " Dobbel checkout" : " Single checkout"} • 
           Først til {setsToWin} • Set {setNumber}
         </span>

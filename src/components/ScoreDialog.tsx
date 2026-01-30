@@ -50,7 +50,7 @@ export function ScoreDialog({
 
   const player1 = players.find((p) => p.id === match.player1_id);
   const player2 = players.find((p) => p.id === match.player2_id);
-  const isGroupStage = match.stage === "group";
+  const isGroupOrLeagueStage = match.stage === "group" || match.stage === "league";
 
   const handleComplete = async (
     winnerId: string,
@@ -63,7 +63,7 @@ export function ScoreDialog({
     player2Darts: number
   ) => {
     try {
-      if (isGroupStage) {
+      if (isGroupOrLeagueStage) {
         await updateGroupMatch.mutateAsync({
           matchId: match.id,
           winnerId,
@@ -120,10 +120,10 @@ export function ScoreDialog({
             match={match}
             players={players}
             tournamentId={tournamentId}
-            stage={isGroupStage ? "group" : "knockout"}
+            stage={isGroupOrLeagueStage ? "group" : "knockout"}
             showCheckoutSuggestions={showCheckoutSuggestions}
-            checkoutType={isGroupStage ? groupCheckoutType : knockoutCheckoutType}
-            setsToWin={isGroupStage ? groupSetsToWin : knockoutSetsToWin}
+            checkoutType={isGroupOrLeagueStage ? groupCheckoutType : knockoutCheckoutType}
+            setsToWin={isGroupOrLeagueStage ? groupSetsToWin : knockoutSetsToWin}
             onComplete={handleComplete}
           />
         </DialogContent>
