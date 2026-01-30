@@ -45,7 +45,7 @@ export function CreateTournamentWizard() {
   const [knockoutSetsToWin, setKnockoutSetsToWin] = useState<number>(3);
   const [groupCheckoutType, setGroupCheckoutType] = useState<string>("single");
   const [knockoutCheckoutType, setKnockoutCheckoutType] = useState<string>("double");
-  const [showCheckoutSuggestions, setShowCheckoutSuggestions] = useState<boolean>(true);
+  const [showCheckoutSuggestions, setShowCheckoutSuggestions] = useState<boolean>(false);
 
   const addPlayer = () => {
     setPlayerNames([...playerNames, ""]);
