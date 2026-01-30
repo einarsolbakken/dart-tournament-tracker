@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef } from "react";
 import { Home, Plus, Target, History, Menu, X } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import dartArenaLogo from "@/assets/dart-arena-logo.svg";
@@ -20,8 +20,9 @@ interface AppSidebarProps {
   onToggle: () => void;
 }
 
-export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
-  return (
+export const AppSidebar = forwardRef<HTMLElement, AppSidebarProps>(
+  function AppSidebar({ isOpen, onToggle }, ref) {
+    return (
     <aside 
       className={`
         fixed left-0 top-0 h-screen z-40
@@ -83,6 +84,7 @@ export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
           ))}
         </ul>
       </nav>
-    </aside>
-  );
-}
+      </aside>
+    );
+  }
+);
