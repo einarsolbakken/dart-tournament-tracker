@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, CheckCircle2, SkipForward } from "lucide-react";
+import { Trophy, CheckCircle2, SkipForward } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Match, Player } from "@/hooks/useTournaments";
@@ -90,12 +90,6 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
     return displayName;
   };
 
-  const getPositionIcon = (position: number) => {
-    if (position === 1) return <Trophy className="w-4 h-4 text-yellow-500" />;
-    if (position === 2) return <Medal className="w-4 h-4 text-gray-400" />;
-    if (position === 3) return <Medal className="w-4 h-4 text-amber-600" />;
-    return null;
-  };
 
   return (
     <div className="space-y-6">
@@ -119,6 +113,7 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
                 <TableHead className="text-center w-16">K</TableHead>
                 <TableHead className="text-center w-16">V</TableHead>
                 <TableHead className="text-center w-16">T</TableHead>
+                <TableHead className="text-center w-20">LF</TableHead>
                 <TableHead className="text-center w-20">Avg</TableHead>
               </TableRow>
             </TableHeader>
@@ -140,16 +135,27 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
                 const matchesWon = playerMatches.filter(m => m.winner_id === player.id).length;
                 const matchesLost = matchesPlayed - matchesWon;
                 
+                // Calculate leg difference (legs won - legs lost)
+                let legsWon = 0;
+                let legsLost = 0;
+                playerMatches.forEach(m => {
+                  if (m.player1_id === player.id) {
+                    legsWon += m.player1_sets || 0;
+                    legsLost += m.player2_sets || 0;
+                  } else {
+                    legsWon += m.player2_sets || 0;
+                    legsLost += m.player1_sets || 0;
+                  }
+                });
+                const legDiff = legsWon - legsLost;
+                
                 return (
                   <TableRow 
                     key={player.id}
                     className={willAdvance ? "bg-primary/5" : player.is_eliminated ? "bg-destructive/5" : ""}
                   >
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-1">
-                        {getPositionIcon(position)}
-                        {position}
-                      </div>
+                      {position}
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -165,6 +171,9 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
                     <TableCell className="text-center">{matchesPlayed}</TableCell>
                     <TableCell className="text-center text-green-600">{matchesWon}</TableCell>
                     <TableCell className="text-center text-red-600">{matchesLost}</TableCell>
+                    <TableCell className={`text-center ${legDiff > 0 ? 'text-green-600' : legDiff < 0 ? 'text-red-600' : ''}`}>
+                      {legDiff > 0 ? `+${legDiff}` : legDiff}
+                    </TableCell>
                     <TableCell className="text-center">{avg.toFixed(1)}</TableCell>
                   </TableRow>
                 );
