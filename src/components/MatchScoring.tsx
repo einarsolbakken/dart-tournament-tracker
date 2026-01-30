@@ -419,7 +419,7 @@ export function MatchScoring({
   };
 
   return (
-    <div className="relative min-h-[80vh]">
+    <div className="relative h-full min-h-screen flex flex-col">
       {/* BUST Overlay */}
       {showBust && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 animate-in fade-in duration-200">
@@ -499,21 +499,24 @@ export function MatchScoring({
         </div>
       )}
 
-      {/* Kampinfo */}
-      <div className="text-center text-sm text-muted-foreground mb-6">
-        <span className="bg-muted px-4 py-2 rounded-full text-base">
+      {/* Header with match info and player names */}
+      <div className="text-center py-4 border-b border-border mb-4">
+        <h1 className="font-display text-2xl md:text-3xl mb-2">
+          {player1?.name} vs {player2?.name}
+        </h1>
+        <span className="bg-muted px-4 py-2 rounded-full text-sm md:text-base text-muted-foreground">
           {stage === "knockout" ? "Sluttspill" : (match.stage === "league" ? "Ligakamper" : "Gruppespill")} • 301 • 
           {requireDoubleOut ? " Dobbel checkout" : " Single checkout"} • 
           Først til {setsToWin} • Set {setNumber}
         </span>
       </div>
 
-      {/* Side-by-side layout - MUCH LARGER */}
-      <div className="flex flex-col xl:flex-row gap-8 items-stretch">
-        {/* Left side: Scores */}
-        <div className="xl:w-1/2 space-y-6">
-          {/* Scoreboard */}
-          <div className="grid grid-cols-2 gap-6">
+      {/* Main content - fills remaining space */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:gap-8">
+        {/* Left side: Stats and controls */}
+        <div className="lg:w-[400px] xl:w-[450px] flex flex-col gap-4 lg:gap-6">
+          {/* Scoreboard - stacked vertically */}
+          <div className="flex flex-col gap-4">
             <div className="space-y-2">
               <PlayerScoreCard
                 name={player1?.name || "Spiller 1"}
@@ -553,20 +556,20 @@ export function MatchScoring({
           </div>
 
           {/* Current round */}
-          <div className="bg-muted rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-base text-muted-foreground">
+          <div className="bg-muted rounded-xl p-4 lg:p-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm lg:text-base text-muted-foreground">
                 {currentPlayerName}'s tur
               </span>
-              <span className="font-bold text-3xl text-accent">+{roundScore}</span>
+              <span className="font-bold text-2xl lg:text-3xl text-accent">+{roundScore}</span>
             </div>
             
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-2 lg:gap-3 mb-4">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
                   className={cn(
-                    "flex-1 h-20 rounded-lg flex items-center justify-center font-bold text-2xl",
+                    "flex-1 h-16 lg:h-20 rounded-lg flex items-center justify-center font-bold text-xl lg:text-2xl",
                     currentThrows[i]
                       ? currentThrows[i].score === 0 
                         ? "bg-destructive text-destructive-foreground"
@@ -579,32 +582,32 @@ export function MatchScoring({
               ))}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-2 lg:gap-3">
               <Button
                 variant="outline"
-                size="lg"
+                size="default"
                 onClick={undoLastThrow}
                 disabled={history.length === 0}
-                className="text-base"
+                className="text-sm lg:text-base"
               >
-                <Undo2 className="w-5 h-5 mr-2" />
+                <Undo2 className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
                 Angre
               </Button>
               <Button
                 variant="outline"
-                size="lg"
+                size="default"
                 onClick={switchPlayer}
-                className="ml-auto text-base"
+                className="ml-auto text-sm lg:text-base"
               >
                 Neste spiller
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 ml-2" />
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Right side: Dartboard */}
-        <div className="xl:w-1/2 flex items-center justify-center">
+        {/* Right side: Dartboard - takes remaining space */}
+        <div className="flex-1 flex items-center justify-center min-h-[400px] lg:min-h-0">
           <DartBoard
             onScore={handleScore}
             disabled={currentThrows.length >= 3 || !!matchResult}
