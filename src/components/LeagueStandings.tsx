@@ -25,6 +25,22 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
     return completedMatches.filter(m => m.winner_id === playerId).length;
   };
 
+  // Helper to get leg difference for a player
+  const getPlayerLegDiff = (playerId: string) => {
+    let legsWon = 0;
+    let legsLost = 0;
+    completedMatches.forEach(m => {
+      if (m.player1_id === playerId) {
+        legsWon += m.player1_sets || 0;
+        legsLost += m.player2_sets || 0;
+      } else if (m.player2_id === playerId) {
+        legsWon += m.player2_sets || 0;
+        legsLost += m.player1_sets || 0;
+      }
+    });
+    return legsWon - legsLost;
+  };
+
   // Sort players by league standings
   const sortedPlayers = [...players].sort((a, b) => {
     // 1. Sort by wins first (most wins = highest rank)
@@ -33,7 +49,13 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
     if (bWins !== aWins) {
       return bWins - aWins;
     }
-    // 2. Then by average (higher is better) as tiebreaker
+    // 2. Then by leg difference as tiebreaker
+    const aLegDiff = getPlayerLegDiff(a.id);
+    const bLegDiff = getPlayerLegDiff(b.id);
+    if (bLegDiff !== aLegDiff) {
+      return bLegDiff - aLegDiff;
+    }
+    // 3. Then by average (higher is better) as final tiebreaker
     const aAvg = (a.total_darts || 0) > 0 ? ((a.total_score || 0) / (a.total_darts || 1)) * 3 : 0;
     const bAvg = (b.total_darts || 0) > 0 ? ((b.total_score || 0) / (b.total_darts || 1)) * 3 : 0;
     return bAvg - aAvg;
