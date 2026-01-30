@@ -233,8 +233,6 @@ export function CreateTournamentWizard() {
               setGroupCheckoutType={setGroupCheckoutType}
               knockoutCheckoutType={knockoutCheckoutType}
               setKnockoutCheckoutType={setKnockoutCheckoutType}
-              showCheckoutSuggestions={showCheckoutSuggestions}
-              setShowCheckoutSuggestions={setShowCheckoutSuggestions}
             />
           </div>
         );

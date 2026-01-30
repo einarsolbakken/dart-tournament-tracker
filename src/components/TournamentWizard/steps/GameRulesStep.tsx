@@ -16,8 +16,6 @@ interface GameRulesStepProps {
   setGroupCheckoutType: (type: string) => void;
   knockoutCheckoutType: string;
   setKnockoutCheckoutType: (type: string) => void;
-  showCheckoutSuggestions: boolean;
-  setShowCheckoutSuggestions: (show: boolean) => void;
 }
 
 export const GameRulesStep = forwardRef<HTMLDivElement, GameRulesStepProps>(
@@ -33,8 +31,6 @@ export const GameRulesStep = forwardRef<HTMLDivElement, GameRulesStepProps>(
     setGroupCheckoutType,
     knockoutCheckoutType,
     setKnockoutCheckoutType,
-    showCheckoutSuggestions,
-    setShowCheckoutSuggestions,
   }, ref) {
     return (
       <div ref={ref} className="space-y-8 max-w-xl mx-auto">
@@ -148,40 +144,6 @@ export const GameRulesStep = forwardRef<HTMLDivElement, GameRulesStepProps>(
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Support Toggle */}
-          <div className="space-y-4">
-            <Label className="text-base font-semibold">Checkout-forslag</Label>
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant={showCheckoutSuggestions ? "default" : "outline"}
-                size="lg"
-                onClick={() => setShowCheckoutSuggestions(true)}
-                className={cn(
-                  "flex-1 transition-all",
-                  showCheckoutSuggestions && "shadow-lg"
-                )}
-              >
-                På
-              </Button>
-              <Button
-                type="button"
-                variant={!showCheckoutSuggestions ? "default" : "outline"}
-                size="lg"
-                onClick={() => setShowCheckoutSuggestions(false)}
-                className={cn(
-                  "flex-1 transition-all",
-                  !showCheckoutSuggestions && "shadow-lg"
-                )}
-              >
-                Av
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Vis checkout-forslag under kamper for å hjelpe spillerne
-            </p>
           </div>
         </div>
       </div>
