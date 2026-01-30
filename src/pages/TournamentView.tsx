@@ -329,6 +329,8 @@ const TournamentView = () => {
           players={players || []}
           tournamentId={id || ""}
           showCheckoutSuggestions={tournament?.show_checkout_suggestions ?? true}
+          groupCheckoutType={tournament?.group_checkout_type ?? "single"}
+          knockoutCheckoutType={tournament?.knockout_checkout_type ?? "double"}
           onClose={() => setSelectedMatch(null)}
         />
 
