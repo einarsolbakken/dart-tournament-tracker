@@ -2,8 +2,6 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -109,13 +107,7 @@ export function ScoreDialog({
   return (
     <>
       <Dialog open={!!match} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-[95vw] xl:max-w-7xl max-h-[95vh] overflow-y-auto p-6 xl:p-8">
-          <DialogHeader>
-            <DialogTitle className="font-display text-2xl text-center">
-              {player1?.name} vs {player2?.name}
-            </DialogTitle>
-          </DialogHeader>
-          
+        <DialogContent fullscreen>
           <MatchScoring
             match={match}
             players={players}
