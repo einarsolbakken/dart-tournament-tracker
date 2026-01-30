@@ -500,8 +500,8 @@ export function MatchScoring({
       )}
 
       {/* Header with match info and player names */}
-      <div className="text-center py-2 border-b border-border mb-2">
-        <h1 className="font-display text-2xl md:text-3xl">
+      <div className="text-center pt-1 pb-2 border-b border-border mb-2">
+        <h1 className="font-display text-3xl md:text-4xl font-bold">
           {player1?.name} vs {player2?.name}
         </h1>
         <span className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground inline-block mt-1">
