@@ -607,7 +607,7 @@ export function MatchScoring({
         </div>
 
         {/* Right side: Dartboard - takes remaining space */}
-        <div className="flex-1 flex items-center justify-center min-h-[400px] lg:min-h-0">
+        <div className="flex-1 flex items-start justify-start min-h-[400px] lg:min-h-0 lg:pl-4">
           <DartBoard
             onScore={handleScore}
             disabled={currentThrows.length >= 3 || !!matchResult}
