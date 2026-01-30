@@ -500,11 +500,11 @@ export function MatchScoring({
       )}
 
       {/* Header with match info and player names */}
-      <div className="text-center py-4 border-b border-border mb-4">
-        <h1 className="font-display text-2xl md:text-3xl mb-2">
+      <div className="text-center py-2 border-b border-border mb-2">
+        <h1 className="font-display text-2xl md:text-3xl">
           {player1?.name} vs {player2?.name}
         </h1>
-        <span className="bg-muted px-4 py-2 rounded-full text-sm md:text-base text-muted-foreground">
+        <span className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground inline-block mt-1">
           {stage === "knockout" ? "Sluttspill" : (match.stage === "league" ? "Ligakamper" : "Gruppespill")} • 301 • 
           {requireDoubleOut ? " Dobbel checkout" : " Single checkout"} • 
           Først til {setsToWin} • Set {setNumber}
