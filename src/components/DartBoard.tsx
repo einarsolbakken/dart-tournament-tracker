@@ -108,7 +108,21 @@ export function DartBoard({ onScore, disabled }: DartBoardProps) {
 
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center">
-      <svg viewBox="0 0 400 440" className="w-full max-w-[700px] xl:max-w-[800px] mx-auto">
+      <svg viewBox="0 0 400 400" className="w-full max-w-[700px] xl:max-w-[800px] mx-auto">
+        {/* Miss area - clicking outside the dartboard */}
+        <rect
+          x="0"
+          y="0"
+          width="400"
+          height="400"
+          fill="transparent"
+          className={cn(
+            "cursor-pointer",
+            disabled && "cursor-not-allowed"
+          )}
+          onClick={() => !disabled && onScore(0, 1)}
+        />
+        
         {/* Outer ring background */}
         <circle cx="200" cy="200" r="180" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="1" />
         
@@ -150,21 +164,6 @@ export function DartBoard({ onScore, disabled }: DartBoardProps) {
           onMouseLeave={() => setHoveredSegment(null)}
           onClick={() => handleBullClick(true)}
         />
-
-        {/* Miss button - integrated in SVG */}
-        <foreignObject x="100" y="395" width="200" height="40">
-          <button
-            onClick={() => onScore(0, 1)}
-            disabled={disabled}
-            className={cn(
-              "w-full h-full rounded-lg text-lg font-bold transition-colors",
-              "bg-destructive/80 hover:bg-destructive text-destructive-foreground",
-              disabled && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            Bom
-          </button>
-        </foreignObject>
       </svg>
     </div>
   );
