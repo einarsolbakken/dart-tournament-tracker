@@ -331,6 +331,8 @@ const TournamentView = () => {
           showCheckoutSuggestions={tournament?.show_checkout_suggestions ?? true}
           groupCheckoutType={tournament?.group_checkout_type ?? "single"}
           knockoutCheckoutType={tournament?.knockout_checkout_type ?? "double"}
+          groupSetsToWin={tournament?.group_sets_to_win ?? 2}
+          knockoutSetsToWin={tournament?.knockout_sets_to_win ?? 3}
           onClose={() => setSelectedMatch(null)}
         />
 

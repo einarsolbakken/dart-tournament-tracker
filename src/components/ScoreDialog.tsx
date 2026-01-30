@@ -26,6 +26,8 @@ interface ScoreDialogProps {
   showCheckoutSuggestions: boolean;
   groupCheckoutType: string;
   knockoutCheckoutType: string;
+  groupSetsToWin: number;
+  knockoutSetsToWin: number;
   onClose: () => void;
 }
 
@@ -36,6 +38,8 @@ export function ScoreDialog({
   showCheckoutSuggestions,
   groupCheckoutType,
   knockoutCheckoutType,
+  groupSetsToWin,
+  knockoutSetsToWin,
   onClose,
 }: ScoreDialogProps) {
   const updateGroupMatch = useUpdateGroupMatch();
@@ -119,6 +123,7 @@ export function ScoreDialog({
             stage={isGroupStage ? "group" : "knockout"}
             showCheckoutSuggestions={showCheckoutSuggestions}
             checkoutType={isGroupStage ? groupCheckoutType : knockoutCheckoutType}
+            setsToWin={isGroupStage ? groupSetsToWin : knockoutSetsToWin}
             onComplete={handleComplete}
           />
         </DialogContent>
