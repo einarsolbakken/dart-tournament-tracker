@@ -272,7 +272,8 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
                   <div className="flex items-center text-sm gap-2">
                     {/* Player 1 name */}
                     <span className={`truncate flex-1 text-left ${
-                      match.winner_id === player1?.id ? "font-bold text-primary" : ""
+                      match.winner_id === player1?.id ? "font-bold text-primary" : 
+                      match.winner_id === player2?.id ? "text-destructive" : ""
                     }`}>
                       {player1?.name || "TBD"}
                     </span>
@@ -320,7 +321,8 @@ export function LeagueStandings({ players, matches, onMatchClick, onEditMatch, o
                     
                     {/* Player 2 name */}
                     <span className={`truncate flex-1 text-right ${
-                      match.winner_id === player2?.id ? "font-bold text-primary" : ""
+                      match.winner_id === player2?.id ? "font-bold text-primary" : 
+                      match.winner_id === player1?.id ? "text-destructive" : ""
                     }`}>
                       {player2?.name || "TBD"}
                     </span>
