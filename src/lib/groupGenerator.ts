@@ -19,27 +19,17 @@ export interface GroupInfo {
 export function generateGroups(players: PlayerForGroup[]): GroupInfo[] {
   const n = players.length;
   
-  // If 8 or fewer players, no group stage needed - go straight to knockout
-  // This is handled at tournament creation level
-  
-  // For more than 8 players, we need exactly 8 to advance to quarterfinals
-  // Calculate optimal group structure
+  // Determine number of groups - always aim for 8 advancing to knockout
+  // With 4 groups and top 2 from each advancing = 8 players in knockout
   let numGroups: number;
-  let targetAdvancing = 8;
   
-  if (n <= 8) {
-    // 8 or fewer - straight to knockout (should not reach here for group stage)
-    numGroups = Math.ceil(n / 4);
-  } else if (n <= 12) {
-    // 9-12 players: 4 groups, need to eliminate (n - 8) players
-    // With 4 groups of 3 each (12 players), eliminating 4 leaves 8
-    numGroups = 4;
-  } else if (n <= 16) {
-    // 13-16 players: 4 groups of 4, eliminate 2 per group = 8 advance
-    numGroups = 4;
+  if (n <= 4) {
+    numGroups = 1;
+  } else if (n <= 8) {
+    numGroups = 2;
   } else {
-    // More than 16: still aim for 8 advancing
-    numGroups = Math.ceil(n / 4);
+    // For 9+ players, use 4 groups with top 2 from each advancing
+    numGroups = 4;
   }
   
   // Initialize groups
@@ -53,28 +43,18 @@ export function generateGroups(players: PlayerForGroup[]): GroupInfo[] {
     });
   }
   
-  // Seed players (or shuffle if no seeds)
+  // Seed players (higher seed = better player = lower number)
   const seededPlayers = [...players].sort((a, b) => (a.seed || 999) - (b.seed || 999));
   
-  // Distribute players in snake draft pattern for balanced groups
-  // E.g., with 3 groups: 1->A, 2->B, 3->C, 4->C, 5->B, 6->A, 7->A, 8->B, 9->C...
-  let direction = 1;
-  let groupIndex = 0;
-  
-  for (const player of seededPlayers) {
-    groups[groupIndex].playerIds.push(player.id);
+  // Distribute players using snake draft for balanced groups
+  // Round 1: A B C D, Round 2: D C B A, Round 3: A B C D, etc.
+  for (let i = 0; i < seededPlayers.length; i++) {
+    const round = Math.floor(i / numGroups);
+    const posInRound = i % numGroups;
     
-    // Move to next group
-    groupIndex += direction;
-    
-    // Reverse direction at ends
-    if (groupIndex >= numGroups) {
-      groupIndex = numGroups - 1;
-      direction = -1;
-    } else if (groupIndex < 0) {
-      groupIndex = 0;
-      direction = 1;
-    }
+    // Snake: even rounds go forward (0,1,2,3), odd rounds go backward (3,2,1,0)
+    const groupIdx = round % 2 === 0 ? posInRound : (numGroups - 1 - posInRound);
+    groups[groupIdx].playerIds.push(seededPlayers[i].id);
   }
   
   return groups;
@@ -87,7 +67,7 @@ export function generateGroupMatches(groups: GroupInfo[]): GroupMatch[] {
     const players = group.playerIds;
     let matchNum = 1;
     
-    // Round-robin: each player plays against every other player in the group
+    // Round-robin: each player plays against every other player in the group once
     for (let i = 0; i < players.length; i++) {
       for (let j = i + 1; j < players.length; j++) {
         matches.push({
@@ -98,16 +78,7 @@ export function generateGroupMatches(groups: GroupInfo[]): GroupMatch[] {
         });
       }
     }
-    
-    // If only 2 players in group, add a second match between them
-    if (players.length === 2) {
-      matches.push({
-        groupName: group.name,
-        matchNumber: matchNum++,
-        player1Id: players[1], // Swap order for variety
-        player2Id: players[0],
-      });
-    }
+    // No extra matches for 2-player groups - just single round-robin
   }
   
   return matches;
