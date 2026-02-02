@@ -89,7 +89,7 @@ export function validateLeagueConfig(playerCount: number, matchesPerPlayer: numb
 /**
  * Generates league matches where all players play exactly K matches.
  * No player plays the same opponent more than once.
- * Uses a greedy algorithm with randomization to distribute matches fairly.
+ * Uses a deterministic round-robin approach for guaranteed fairness.
  */
 export function generateLeagueMatches(
   players: PlayerForLeague[],
@@ -112,58 +112,67 @@ export function generateLeagueMatches(
   // Initialize match counts
   players.forEach(p => matchCounts.set(p.id, 0));
 
-  // Generate all possible unique pairs
-  const allPairs: [string, string][] = [];
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      allPairs.push([players[i].id, players[j].id]);
-    }
-  }
-
-  // Shuffle pairs for randomization
-  for (let i = allPairs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [allPairs[i], allPairs[j]] = [allPairs[j], allPairs[i]];
-  }
-
-  // Greedy selection: pick matches where both players have fewer than K matches
+  // Use a deterministic approach based on round-robin principles
+  // Generate matches round by round, ensuring each player gets one match per round when possible
   let matchNumber = 1;
-  for (const [p1, p2] of allPairs) {
-    const p1Count = matchCounts.get(p1) || 0;
-    const p2Count = matchCounts.get(p2) || 0;
+  
+  while (matches.length < config.totalMatches) {
+    // Find players who still need matches, sorted by how many they still need (most needed first)
+    const playersNeedingMatches = players
+      .filter(p => (matchCounts.get(p.id) || 0) < matchesPerPlayer)
+      .sort((a, b) => {
+        const aNeeds = matchesPerPlayer - (matchCounts.get(a.id) || 0);
+        const bNeeds = matchesPerPlayer - (matchCounts.get(b.id) || 0);
+        return bNeeds - aNeeds; // Most needed first
+      });
 
-    if (p1Count < matchesPerPlayer && p2Count < matchesPerPlayer) {
-      const pairKey = [p1, p2].sort().join("-");
-      if (!playedPairs.has(pairKey)) {
-        matches.push({
-          matchNumber: matchNumber++,
-          player1Id: p1,
-          player2Id: p2,
-        });
-        matchCounts.set(p1, p1Count + 1);
-        matchCounts.set(p2, p2Count + 1);
-        playedPairs.add(pairKey);
+    if (playersNeedingMatches.length < 2) break;
+
+    // Try to pair players who haven't played each other
+    let matchMade = false;
+    
+    for (let i = 0; i < playersNeedingMatches.length && !matchMade; i++) {
+      for (let j = i + 1; j < playersNeedingMatches.length && !matchMade; j++) {
+        const p1 = playersNeedingMatches[i];
+        const p2 = playersNeedingMatches[j];
+        const pairKey = [p1.id, p2.id].sort().join("-");
+        
+        if (!playedPairs.has(pairKey)) {
+          matches.push({
+            matchNumber: matchNumber++,
+            player1Id: p1.id,
+            player2Id: p2.id,
+          });
+          matchCounts.set(p1.id, (matchCounts.get(p1.id) || 0) + 1);
+          matchCounts.set(p2.id, (matchCounts.get(p2.id) || 0) + 1);
+          playedPairs.add(pairKey);
+          matchMade = true;
+        }
       }
     }
 
-    // Check if we've generated enough matches
-    if (matches.length >= config.totalMatches) {
+    // If no match could be made, we have a configuration problem
+    if (!matchMade) {
+      console.error("Could not generate valid league schedule - configuration issue");
       break;
     }
   }
 
   // Verify all players got exactly K matches
-  const allPlayersHaveKMatches = Array.from(matchCounts.values()).every(
-    count => count === matchesPerPlayer
+  const playerMatchCounts = players.map(p => ({
+    name: p.name,
+    count: matchCounts.get(p.id) || 0
+  }));
+  
+  const allPlayersHaveKMatches = playerMatchCounts.every(
+    p => p.count === matchesPerPlayer
   );
 
   if (!allPlayersHaveKMatches) {
-    console.warn("Warning: Not all players got exactly K matches. This configuration might be problematic.");
-    // Log which players have issues
-    players.forEach(p => {
-      const count = matchCounts.get(p.id) || 0;
-      if (count !== matchesPerPlayer) {
-        console.warn(`Player ${p.name} has ${count} matches instead of ${matchesPerPlayer}`);
+    console.error("Error: Not all players got exactly K matches:");
+    playerMatchCounts.forEach(p => {
+      if (p.count !== matchesPerPlayer) {
+        console.error(`  ${p.name}: ${p.count} matches (expected ${matchesPerPlayer})`);
       }
     });
   }
