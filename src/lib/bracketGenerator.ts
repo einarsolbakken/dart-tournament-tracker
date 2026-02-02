@@ -23,24 +23,24 @@ export function generateBracket(players: Player[]): Match[] {
   const totalRounds = Math.log2(bracketSize);
   const matches: Match[] = [];
   
-  // Seed players (or shuffle if no seeds)
+  // Seed players (or sort by seed if provided)
   const seededPlayers = [...players].sort((a, b) => (a.seed || 999) - (b.seed || 999));
   
-  // Add byes if needed
+  // Add byes if needed (null = bye)
   const byes = bracketSize - n;
   const paddedPlayers: (Player | null)[] = [...seededPlayers];
   for (let i = 0; i < byes; i++) {
     paddedPlayers.push(null);
   }
   
-  // Standard seeding placement for bracket
-  const seededOrder = getSeededOrder(bracketSize);
+  // Create proper bracket seeding: 1v8, 4v5, 3v6, 2v7 (for 8 players)
+  // This ensures that 1 and 2 can only meet in final, 1-4 in semis, etc.
+  const bracketOrder = getBracketSeeding(bracketSize);
   const orderedPlayers: (Player | null)[] = new Array(bracketSize).fill(null);
-  seededOrder.forEach((position, index) => {
-    if (index < paddedPlayers.length) {
-      orderedPlayers[position] = paddedPlayers[index];
-    }
-  });
+  
+  for (let i = 0; i < paddedPlayers.length; i++) {
+    orderedPlayers[bracketOrder[i]] = paddedPlayers[i];
+  }
   
   // Generate first round matches
   const firstRoundMatches = bracketSize / 2;
@@ -73,16 +73,25 @@ export function generateBracket(players: Player[]): Match[] {
   return matches;
 }
 
-// Standard seeding: 1 meets last, 2 meets second-to-last, etc.
-// For 8 players: 1v8, 2v7, 3v6, 4v5
-function getSeededOrder(size: number): number[] {
-  // We want pairs: (0, size-1), (1, size-2), (2, size-3), ...
-  // So the order is: 0, 7, 1, 6, 2, 5, 3, 4 for size 8
+// Standard tournament bracket seeding
+// For 8 players: creates matchups 1v8, 4v5, 3v6, 2v7
+// This ensures seeds 1&2 can only meet in final, 1-4 in semis
+function getBracketSeeding(size: number): number[] {
+  if (size === 2) return [0, 1];
+  
   const result: number[] = [];
   
-  for (let i = 0; i < size / 2; i++) {
-    result.push(i);
-    result.push(size - 1 - i);
+  // Build seeding recursively
+  // For each half, we need the bracket seeding of that half
+  const half = size / 2;
+  const halfSeeding = getBracketSeeding(half);
+  
+  // Pair seed i with seed (size - 1 - i) for proper bracket matchups
+  for (let i = 0; i < half; i++) {
+    // Top half position
+    result.push(halfSeeding[i] * 2);
+    // Bottom half position (mirror)
+    result.push(size - 1 - halfSeeding[i] * 2);
   }
   
   return result;
