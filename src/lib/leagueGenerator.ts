@@ -89,7 +89,7 @@ export function validateLeagueConfig(playerCount: number, matchesPerPlayer: numb
 /**
  * Generates league matches where all players play exactly K matches.
  * No player plays the same opponent more than once.
- * Uses a deterministic round-robin approach for guaranteed fairness.
+ * Uses randomized player order + fair matching for random but balanced schedules.
  */
 export function generateLeagueMatches(
   players: PlayerForLeague[],
@@ -105,26 +105,33 @@ export function generateLeagueMatches(
     return [];
   }
 
+  // Shuffle players for random matchups
+  const shuffledPlayers = [...players];
+  for (let i = shuffledPlayers.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledPlayers[i], shuffledPlayers[j]] = [shuffledPlayers[j], shuffledPlayers[i]];
+  }
+
   const matches: LeagueMatch[] = [];
   const matchCounts: Map<string, number> = new Map();
   const playedPairs: Set<string> = new Set();
 
   // Initialize match counts
-  players.forEach(p => matchCounts.set(p.id, 0));
+  shuffledPlayers.forEach(p => matchCounts.set(p.id, 0));
 
-  // Use a deterministic approach based on round-robin principles
-  // Generate matches round by round, ensuring each player gets one match per round when possible
   let matchNumber = 1;
   
   while (matches.length < config.totalMatches) {
     // Find players who still need matches, sorted by how many they still need (most needed first)
-    const playersNeedingMatches = players
+    // Add secondary random sort to maintain variety in matchups
+    const playersNeedingMatches = shuffledPlayers
       .filter(p => (matchCounts.get(p.id) || 0) < matchesPerPlayer)
+      .map(p => ({ player: p, needs: matchesPerPlayer - (matchCounts.get(p.id) || 0), rand: Math.random() }))
       .sort((a, b) => {
-        const aNeeds = matchesPerPlayer - (matchCounts.get(a.id) || 0);
-        const bNeeds = matchesPerPlayer - (matchCounts.get(b.id) || 0);
-        return bNeeds - aNeeds; // Most needed first
-      });
+        if (b.needs !== a.needs) return b.needs - a.needs; // Most needed first
+        return a.rand - b.rand; // Random tiebreaker
+      })
+      .map(x => x.player);
 
     if (playersNeedingMatches.length < 2) break;
 
