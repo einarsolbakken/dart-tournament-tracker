@@ -31,9 +31,10 @@ export interface Player {
   group_sets_lost: number;
   total_score: number;
   total_darts: number;
-  avg_score: number;
+  avg_score?: number | null;
   is_eliminated: boolean;
   country: string | null;
+  created_at?: string;
 }
 
 export interface Match {
@@ -44,9 +45,11 @@ export interface Match {
   player1_id: string | null;
   player2_id: string | null;
   winner_id: string | null;
-  loser_id: string | null;
+  loser_id?: string | null;
   player1_sets: number;
   player2_sets: number;
+  player1_score?: number | null;
+  player2_score?: number | null;
   player1_total_score: number | null;
   player1_darts: number | null;
   player2_total_score: number | null;
@@ -56,7 +59,7 @@ export interface Match {
   status: string;
   created_at: string;
   sets_to_win: number;
-  checkout_type: string;
+  checkout_type?: string | null;
 }
 
 export function useTournaments() {
