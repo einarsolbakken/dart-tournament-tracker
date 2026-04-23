@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { TournamentFormatStep } from "./steps/TournamentFormatStep";
 import { GameRulesStep } from "./steps/GameRulesStep";
 import { PlayersStep } from "./steps/PlayersStep";
 import { cn } from "@/lib/utils";
+import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/leagueGenerator";
 
 type TournamentFormat = "group" | "league";
 
@@ -26,11 +27,10 @@ const STEPS = [
 export function CreateTournamentWizard() {
   const navigate = useNavigate();
   const createTournament = useCreateTournament();
-  
+
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState<"left" | "right">("right");
-  
-  // Form state
+
   const [name, setName] = useState("");
   const [date, setDate] = useState<Date>(new Date());
   const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
@@ -38,8 +38,7 @@ export function CreateTournamentWizard() {
   const [isCreating, setIsCreating] = useState(false);
   const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>("group");
   const [matchesPerPlayer, setMatchesPerPlayer] = useState<number>(3);
-  
-  // Game rules state
+
   const [gameMode, setGameMode] = useState<string>("301");
   const [groupSetsToWin, setGroupSetsToWin] = useState<number>(2);
   const [knockoutSetsToWin, setKnockoutSetsToWin] = useState<number>(3);
@@ -72,26 +71,37 @@ export function CreateTournamentWizard() {
   };
 
   const validPlayerCount = playerNames.filter((n) => n.trim()).length;
-  
-  // Check for duplicate names
+
   const getDuplicateNames = (): Set<string> => {
     const trimmedNames = playerNames
-      .map(n => n.trim().toLowerCase())
-      .filter(n => n.length > 0);
+      .map((n) => n.trim().toLowerCase())
+      .filter((n) => n.length > 0);
     const seen = new Set<string>();
     const duplicates = new Set<string>();
-    
+
     for (const name of trimmedNames) {
       if (seen.has(name)) {
         duplicates.add(name);
       }
       seen.add(name);
     }
+
     return duplicates;
   };
-  
+
   const duplicateNames = getDuplicateNames();
   const hasDuplicates = duplicateNames.size > 0;
+  const validLeagueOptions = getValidMatchesPerPlayerOptions(validPlayerCount);
+  const leagueConfig = validateLeagueConfig(validPlayerCount, matchesPerPlayer);
+  const isLeagueConfigValid = tournamentFormat !== "league" || leagueConfig.isValid;
+
+  useEffect(() => {
+    if (tournamentFormat !== "league") return;
+    if (validLeagueOptions.length === 0) return;
+    if (!validLeagueOptions.includes(matchesPerPlayer)) {
+      setMatchesPerPlayer(validLeagueOptions[0]);
+    }
+  }, [tournamentFormat, matchesPerPlayer, validLeagueOptions]);
 
   const canGoNext = () => {
     switch (currentStep) {
@@ -101,9 +111,10 @@ export function CreateTournamentWizard() {
         return true;
       case 3:
         return true;
-      case 4:
+      case 4: {
         const minPlayers = tournamentFormat === "group" ? 3 : 2;
-        return validPlayerCount >= minPlayers && !hasDuplicates;
+        return validPlayerCount >= minPlayers && !hasDuplicates && isLeagueConfigValid;
+      }
       default:
         return false;
     }
@@ -132,19 +143,24 @@ export function CreateTournamentWizard() {
 
   const handleSubmit = async () => {
     const validPlayers = playerNames.filter((n) => n.trim());
-    
+
     if (hasDuplicates) {
       toast.error("Spillere kan ikke ha samme navn");
       return;
     }
-    
+
     if (tournamentFormat === "group" && validPlayers.length < 3) {
       toast.error("Du trenger minst 3 spillere for gruppespill");
       return;
     }
-    
+
     if (tournamentFormat === "league" && validPlayers.length < 2) {
       toast.error("Du trenger minst 2 spillere for ligasystem");
+      return;
+    }
+
+    if (tournamentFormat === "league" && !leagueConfig.isValid) {
+      toast.error(leagueConfig.errorMessage || "Ugyldig ligaoppsett");
       return;
     }
 
@@ -152,9 +168,9 @@ export function CreateTournamentWizard() {
 
     try {
       const validCountries = playerNames
-        .map((n, i) => n.trim() ? playerCountries[i] : null)
+        .map((n, i) => (n.trim() ? playerCountries[i] : null))
         .filter((_, i) => playerNames[i].trim());
-      
+
       const tournament = await createTournament.mutateAsync({
         name,
         date: format(date, "yyyy-MM-dd"),
@@ -169,11 +185,11 @@ export function CreateTournamentWizard() {
         knockoutCheckoutType,
         showCheckoutSuggestions,
       });
-      
+
       toast.success("Turnering opprettet!");
       navigate(`/tournament/${tournament.id}`);
     } catch (error) {
-      toast.error("Kunne ikke opprette turnering");
+      toast.error(error instanceof Error ? error.message : "Kunne ikke opprette turnering");
       setIsCreating(false);
     }
   };
@@ -262,7 +278,6 @@ export function CreateTournamentWizard() {
 
   return (
     <div className="w-full px-4 lg:px-8">
-      {/* Header */}
       <div className="relative flex items-center justify-center mb-6">
         <Link to="/" className="absolute left-0">
           <Button variant="outline" size="sm" className="gap-2">
@@ -270,7 +285,7 @@ export function CreateTournamentWizard() {
             <span className="hidden sm:inline">Tilbake</span>
           </Button>
         </Link>
-        
+
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
             <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-primary-foreground" />
@@ -282,21 +297,18 @@ export function CreateTournamentWizard() {
         </div>
       </div>
 
-      {/* Step Indicator */}
-      <StepIndicator 
-        steps={STEPS} 
-        currentStep={currentStep} 
+      <StepIndicator
+        steps={STEPS}
+        currentStep={currentStep}
         onStepClick={goToStep}
       />
 
-      {/* Step Content */}
       <Card className="relative overflow-hidden border-border/30 bg-card/80 shadow-xl mt-6">
         <CardContent className="pt-8 pb-8 min-h-[400px]">
           {renderCurrentStep()}
         </CardContent>
       </Card>
 
-      {/* Navigation Buttons */}
       <div className="flex justify-between items-center mt-6 gap-4">
         <Button
           type="button"

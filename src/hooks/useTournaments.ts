@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { generateBracket } from "@/lib/bracketGenerator";
 import { generateGroups, generateGroupMatches } from "@/lib/groupGenerator";
-import { generateLeagueMatches, getDefaultMatchesPerPlayer } from "@/lib/leagueGenerator";
+import { generateLeagueMatches, getDefaultMatchesPerPlayer, validateLeagueConfig } from "@/lib/leagueGenerator";
 
 export interface Tournament {
   id: string;
@@ -29,11 +29,12 @@ export interface Player {
   group_points: number;
   group_sets_won: number;
   group_sets_lost: number;
-  total_darts: number;
   total_score: number;
+  total_darts: number;
+  avg_score?: number | null;
   is_eliminated: boolean;
   country: string | null;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface Match {
@@ -44,19 +45,21 @@ export interface Match {
   player1_id: string | null;
   player2_id: string | null;
   winner_id: string | null;
-  player1_score: number;
-  player2_score: number;
+  loser_id?: string | null;
   player1_sets: number;
   player2_sets: number;
-  player1_total_score: number;
-  player1_darts: number;
-  player2_total_score: number;
-  player2_darts: number;
-  sets_to_win: number;
-  status: string;
+  player1_score?: number | null;
+  player2_score?: number | null;
+  player1_total_score: number | null;
+  player1_darts: number | null;
+  player2_total_score: number | null;
+  player2_darts: number | null;
   stage: string;
   group_name: string | null;
+  status: string;
   created_at: string;
+  sets_to_win: number;
+  checkout_type?: string | null;
 }
 
 export function useTournaments() {
@@ -67,7 +70,7 @@ export function useTournaments() {
         .from("tournaments")
         .select("*")
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data as Tournament[];
     },
@@ -83,7 +86,7 @@ export function useTournament(id: string) {
         .select("*")
         .eq("id", id)
         .maybeSingle();
-      
+
       if (error) throw error;
       return data as Tournament | null;
     },
@@ -100,7 +103,7 @@ export function usePlayers(tournamentId: string) {
         .select("*")
         .eq("tournament_id", tournamentId)
         .order("seed", { ascending: true });
-      
+
       if (error) throw error;
       return data as Player[];
     },
@@ -118,7 +121,7 @@ export function useMatches(tournamentId: string) {
         .eq("tournament_id", tournamentId)
         .order("round", { ascending: true })
         .order("match_number", { ascending: true });
-      
+
       if (error) throw error;
       return data as Match[];
     },
@@ -157,15 +160,24 @@ export function useCreateTournament() {
       knockoutCheckoutType?: string;
       showCheckoutSuggestions?: boolean;
     }) => {
-      // Determine the initial phase based on format
       const initialPhase = format === "league" ? "league" : "group_stage";
-      
-      // Create tournament with custom game settings
+      const resolvedMatchesPerPlayer =
+        format === "league"
+          ? matchesPerPlayer ?? getDefaultMatchesPerPlayer(playerNames.length)
+          : undefined;
+
+      if (format === "league" && resolvedMatchesPerPlayer !== undefined) {
+        const leagueConfig = validateLeagueConfig(playerNames.length, resolvedMatchesPerPlayer);
+        if (!leagueConfig.isValid) {
+          throw new Error(leagueConfig.errorMessage || "Ugyldig ligaoppsett");
+        }
+      }
+
       const { data: tournament, error: tournamentError } = await supabase
         .from("tournaments")
-        .insert({ 
-          name, 
-          date, 
+        .insert({
+          name,
+          date,
           game_mode: gameMode,
           current_phase: initialPhase,
           tournament_format: format,
@@ -180,7 +192,6 @@ export function useCreateTournament() {
 
       if (tournamentError) throw tournamentError;
 
-      // Create players
       const playersToInsert = playerNames.map((playerName, index) => ({
         tournament_id: tournament.id,
         name: playerName,
@@ -196,12 +207,10 @@ export function useCreateTournament() {
       if (playersError) throw playersError;
 
       if (format === "group") {
-        // Generate groups for group format
         const groups = generateGroups(
-          players.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined }))
+          players.map((p) => ({ id: p.id, name: p.name, seed: p.seed || undefined }))
         );
 
-        // Update players with group assignments
         for (const group of groups) {
           await supabase
             .from("players")
@@ -209,12 +218,11 @@ export function useCreateTournament() {
             .in("id", group.playerIds);
         }
 
-        // Generate group matches
         const groupMatches = generateGroupMatches(groups);
-        
+
         const groupMatchesToInsert = groupMatches.map((match, index) => ({
           tournament_id: tournament.id,
-          round: 0, // Round 0 for group stage
+          round: 0,
           match_number: index + 1,
           player1_id: match.player1Id,
           player2_id: match.player2Id,
@@ -229,23 +237,30 @@ export function useCreateTournament() {
 
         if (matchesError) throw matchesError;
       } else {
-        // League format: all players in one "league" (no groups)
-        // Update all players with group_name "LEAGUE" for identification
         await supabase
           .from("players")
           .update({ group_name: "LEAGUE" })
           .eq("tournament_id", tournament.id);
 
-        // Generate league matches with configurable matches per player
-        const k = matchesPerPlayer ?? getDefaultMatchesPerPlayer(players.length);
+        const k = resolvedMatchesPerPlayer ?? getDefaultMatchesPerPlayer(players.length);
+        const leagueConfig = validateLeagueConfig(players.length, k);
+
+        if (!leagueConfig.isValid) {
+          throw new Error(leagueConfig.errorMessage || "Ugyldig ligaoppsett");
+        }
+
         const leagueMatches = generateLeagueMatches(
-          players.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined })),
+          players.map((p) => ({ id: p.id, name: p.name, seed: p.seed || undefined })),
           k
         );
 
+        if (leagueMatches.length !== leagueConfig.totalMatches) {
+          throw new Error(`Kunne ikke lage ligakamper. Forventet ${leagueConfig.totalMatches}, fikk ${leagueMatches.length}.`);
+        }
+
         const leagueMatchesToInsert = leagueMatches.map((match) => ({
           tournament_id: tournament.id,
-          round: 0, // Round 0 for league stage
+          round: 0,
           match_number: match.matchNumber,
           player1_id: match.player1Id,
           player2_id: match.player2Id,
