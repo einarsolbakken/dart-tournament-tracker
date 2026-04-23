@@ -14,26 +14,81 @@ import { GameRulesStep } from "./steps/GameRulesStep";
 import { PlayersStep } from "./steps/PlayersStep";
 import { cn } from "@/lib/utils";
 import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/leagueGenerator";
-...
+
+type TournamentFormat = "group" | "league";
+
+const STEPS = [
+  { number: 1, label: "Info" },
+  { number: 2, label: "Format" },
+  { number: 3, label: "Regler" },
+  { number: 4, label: "Spillere" },
+];
+
+export function CreateTournamentWizard() {
+  const navigate = useNavigate();
+  const createTournament = useCreateTournament();
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [direction, setDirection] = useState<"left" | "right">("right");
+
+  const [name, setName] = useState("");
+  const [date, setDate] = useState<Date>(new Date());
+  const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
+  const [playerCountries, setPlayerCountries] = useState<string[]>(["", ""]);
+  const [isCreating, setIsCreating] = useState(false);
+  const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>("group");
+  const [matchesPerPlayer, setMatchesPerPlayer] = useState<number>(3);
+
+  const [gameMode, setGameMode] = useState<string>("301");
+  const [groupSetsToWin, setGroupSetsToWin] = useState<number>(2);
+  const [knockoutSetsToWin, setKnockoutSetsToWin] = useState<number>(3);
+  const [groupCheckoutType, setGroupCheckoutType] = useState<string>("single");
+  const [knockoutCheckoutType, setKnockoutCheckoutType] = useState<string>("double");
+  const [showCheckoutSuggestions, setShowCheckoutSuggestions] = useState<boolean>(false);
+
+  const addPlayer = () => {
+    setPlayerNames([...playerNames, ""]);
+    setPlayerCountries([...playerCountries, ""]);
+  };
+
+  const removePlayer = (index: number) => {
+    if (playerNames.length > 2) {
+      setPlayerNames(playerNames.filter((_, i) => i !== index));
+      setPlayerCountries(playerCountries.filter((_, i) => i !== index));
+    }
+  };
+
+  const updatePlayerName = (index: number, value: string) => {
+    const updated = [...playerNames];
+    updated[index] = value;
+    setPlayerNames(updated);
+  };
+
+  const updatePlayerCountry = (index: number, value: string) => {
+    const updated = [...playerCountries];
+    updated[index] = value;
+    setPlayerCountries(updated);
+  };
+
   const validPlayerCount = playerNames.filter((n) => n.trim()).length;
-  
-  // Check for duplicate names
+
   const getDuplicateNames = (): Set<string> => {
     const trimmedNames = playerNames
-      .map(n => n.trim().toLowerCase())
-      .filter(n => n.length > 0);
+      .map((n) => n.trim().toLowerCase())
+      .filter((n) => n.length > 0);
     const seen = new Set<string>();
     const duplicates = new Set<string>();
-    
+
     for (const name of trimmedNames) {
       if (seen.has(name)) {
         duplicates.add(name);
       }
       seen.add(name);
     }
+
     return duplicates;
   };
-  
+
   const duplicateNames = getDuplicateNames();
   const hasDuplicates = duplicateNames.size > 0;
   const validLeagueOptions = getValidMatchesPerPlayerOptions(validPlayerCount);
@@ -46,7 +101,7 @@ import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/lea
     if (!validLeagueOptions.includes(matchesPerPlayer)) {
       setMatchesPerPlayer(validLeagueOptions[0]);
     }
-  }, [tournamentFormat, validPlayerCount, matchesPerPlayer, validLeagueOptions]);
+  }, [tournamentFormat, matchesPerPlayer, validLeagueOptions]);
 
   const canGoNext = () => {
     switch (currentStep) {
@@ -64,20 +119,41 @@ import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/lea
         return false;
     }
   };
-...
+
+  const goNext = () => {
+    if (currentStep < 4 && canGoNext()) {
+      setDirection("right");
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const goBack = () => {
+    if (currentStep > 1) {
+      setDirection("left");
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const goToStep = (step: number) => {
+    if (step < currentStep) {
+      setDirection("left");
+      setCurrentStep(step);
+    }
+  };
+
   const handleSubmit = async () => {
     const validPlayers = playerNames.filter((n) => n.trim());
-    
+
     if (hasDuplicates) {
       toast.error("Spillere kan ikke ha samme navn");
       return;
     }
-    
+
     if (tournamentFormat === "group" && validPlayers.length < 3) {
       toast.error("Du trenger minst 3 spillere for gruppespill");
       return;
     }
-    
+
     if (tournamentFormat === "league" && validPlayers.length < 2) {
       toast.error("Du trenger minst 2 spillere for ligasystem");
       return;
@@ -92,9 +168,9 @@ import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/lea
 
     try {
       const validCountries = playerNames
-        .map((n, i) => n.trim() ? playerCountries[i] : null)
+        .map((n, i) => (n.trim() ? playerCountries[i] : null))
         .filter((_, i) => playerNames[i].trim());
-      
+
       const tournament = await createTournament.mutateAsync({
         name,
         date: format(date, "yyyy-MM-dd"),
@@ -109,7 +185,7 @@ import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/lea
         knockoutCheckoutType,
         showCheckoutSuggestions,
       });
-      
+
       toast.success("Turnering opprettet!");
       navigate(`/tournament/${tournament.id}`);
     } catch (error) {
@@ -202,7 +278,6 @@ import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/lea
 
   return (
     <div className="w-full px-4 lg:px-8">
-      {/* Header */}
       <div className="relative flex items-center justify-center mb-6">
         <Link to="/" className="absolute left-0">
           <Button variant="outline" size="sm" className="gap-2">
@@ -210,7 +285,7 @@ import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/lea
             <span className="hidden sm:inline">Tilbake</span>
           </Button>
         </Link>
-        
+
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
             <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-primary-foreground" />
@@ -222,21 +297,18 @@ import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/lea
         </div>
       </div>
 
-      {/* Step Indicator */}
-      <StepIndicator 
-        steps={STEPS} 
-        currentStep={currentStep} 
+      <StepIndicator
+        steps={STEPS}
+        currentStep={currentStep}
         onStepClick={goToStep}
       />
 
-      {/* Step Content */}
       <Card className="relative overflow-hidden border-border/30 bg-card/80 shadow-xl mt-6">
         <CardContent className="pt-8 pb-8 min-h-[400px]">
           {renderCurrentStep()}
         </CardContent>
       </Card>
 
-      {/* Navigation Buttons */}
       <div className="flex justify-between items-center mt-6 gap-4">
         <Button
           type="button"
