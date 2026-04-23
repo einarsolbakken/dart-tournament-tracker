@@ -2,232 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { generateBracket } from "@/lib/bracketGenerator";
 import { generateGroups, generateGroupMatches } from "@/lib/groupGenerator";
-import { generateLeagueMatches, getDefaultMatchesPerPlayer } from "@/lib/leagueGenerator";
-
-export interface Tournament {
-  id: string;
-  name: string;
-  date: string;
-  game_mode: string;
-  status: string;
-  current_phase: string;
-  tournament_format: string;
-  group_sets_to_win: number;
-  knockout_sets_to_win: number;
-  group_checkout_type: string;
-  knockout_checkout_type: string;
-  show_checkout_suggestions: boolean;
-  created_at: string;
-}
-
-export interface Player {
-  id: string;
-  tournament_id: string;
-  name: string;
-  seed: number | null;
-  group_name: string | null;
-  group_points: number;
-  group_sets_won: number;
-  group_sets_lost: number;
-  total_darts: number;
-  total_score: number;
-  is_eliminated: boolean;
-  country: string | null;
-  created_at: string;
-}
-
-export interface Match {
-  id: string;
-  tournament_id: string;
-  round: number;
-  match_number: number;
-  player1_id: string | null;
-  player2_id: string | null;
-  winner_id: string | null;
-  player1_score: number;
-  player2_score: number;
-  player1_sets: number;
-  player2_sets: number;
-  player1_total_score: number;
-  player1_darts: number;
-  player2_total_score: number;
-  player2_darts: number;
-  sets_to_win: number;
-  status: string;
-  stage: string;
-  group_name: string | null;
-  created_at: string;
-}
-
-export function useTournaments() {
-  return useQuery({
-    queryKey: ["tournaments"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tournaments")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      return data as Tournament[];
-    },
-  });
-}
-
-export function useTournament(id: string) {
-  return useQuery({
-    queryKey: ["tournament", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tournaments")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data as Tournament | null;
-    },
-    enabled: !!id,
-  });
-}
-
-export function usePlayers(tournamentId: string) {
-  return useQuery({
-    queryKey: ["players", tournamentId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("players")
-        .select("*")
-        .eq("tournament_id", tournamentId)
-        .order("seed", { ascending: true });
-      
-      if (error) throw error;
-      return data as Player[];
-    },
-    enabled: !!tournamentId,
-  });
-}
-
-export function useMatches(tournamentId: string) {
-  return useQuery({
-    queryKey: ["matches", tournamentId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("matches")
-        .select("*")
-        .eq("tournament_id", tournamentId)
-        .order("round", { ascending: true })
-        .order("match_number", { ascending: true });
-      
-      if (error) throw error;
-      return data as Match[];
-    },
-    enabled: !!tournamentId,
-  });
-}
-
-export function useCreateTournament() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      name,
-      date,
-      playerNames,
-      playerCountries = [],
-      format = "group",
-      matchesPerPlayer,
-      gameMode = "301",
-      groupSetsToWin = 2,
-      knockoutSetsToWin = 3,
-      groupCheckoutType = "single",
-      knockoutCheckoutType = "double",
-      showCheckoutSuggestions = true,
-    }: {
-      name: string;
-      date: string;
-      playerNames: string[];
-      playerCountries?: string[];
-      format?: "group" | "league";
-      matchesPerPlayer?: number;
-      gameMode?: string;
-      groupSetsToWin?: number;
-      knockoutSetsToWin?: number;
-      groupCheckoutType?: string;
-      knockoutCheckoutType?: string;
-      showCheckoutSuggestions?: boolean;
-    }) => {
-      // Determine the initial phase based on format
-      const initialPhase = format === "league" ? "league" : "group_stage";
-      
-      // Create tournament with custom game settings
-      const { data: tournament, error: tournamentError } = await supabase
-        .from("tournaments")
-        .insert({ 
-          name, 
-          date, 
-          game_mode: gameMode,
-          current_phase: initialPhase,
-          tournament_format: format,
-          group_sets_to_win: groupSetsToWin,
-          knockout_sets_to_win: knockoutSetsToWin,
-          group_checkout_type: groupCheckoutType,
-          knockout_checkout_type: knockoutCheckoutType,
-          show_checkout_suggestions: showCheckoutSuggestions,
-        })
-        .select()
-        .single();
-
-      if (tournamentError) throw tournamentError;
-
-      // Create players
-      const playersToInsert = playerNames.map((playerName, index) => ({
-        tournament_id: tournament.id,
-        name: playerName,
-        seed: index + 1,
-        country: playerCountries[index] || null,
-      }));
-
-      const { data: players, error: playersError } = await supabase
-        .from("players")
-        .insert(playersToInsert)
-        .select();
-
-      if (playersError) throw playersError;
-
-      if (format === "group") {
-        // Generate groups for group format
-        const groups = generateGroups(
-          players.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined }))
-        );
-
-        // Update players with group assignments
-        for (const group of groups) {
-          await supabase
-            .from("players")
-            .update({ group_name: group.name })
-            .in("id", group.playerIds);
-        }
-
-        // Generate group matches
-        const groupMatches = generateGroupMatches(groups);
-        
-        const groupMatchesToInsert = groupMatches.map((match, index) => ({
-          tournament_id: tournament.id,
-          round: 0, // Round 0 for group stage
-          match_number: index + 1,
-          player1_id: match.player1Id,
-          player2_id: match.player2Id,
-          stage: "group",
-          group_name: match.groupName,
-          sets_to_win: groupSetsToWin,
-        }));
-
-        const { error: matchesError } = await supabase
-          .from("matches")
-          .insert(groupMatchesToInsert);
-
-        if (matchesError) throw matchesError;
+import { generateLeagueMatches, getDefaultMatchesPerPlayer, validateLeagueConfig } from "@/lib/leagueGenerator";
+...
       } else {
         // League format: all players in one "league" (no groups)
         // Update all players with group_name "LEAGUE" for identification
@@ -238,10 +14,20 @@ export function useCreateTournament() {
 
         // Generate league matches with configurable matches per player
         const k = matchesPerPlayer ?? getDefaultMatchesPerPlayer(players.length);
+        const leagueConfig = validateLeagueConfig(players.length, k);
+
+        if (!leagueConfig.isValid) {
+          throw new Error(leagueConfig.errorMessage || "Ugyldig ligaoppsett");
+        }
+
         const leagueMatches = generateLeagueMatches(
           players.map(p => ({ id: p.id, name: p.name, seed: p.seed || undefined })),
           k
         );
+
+        if (leagueMatches.length !== leagueConfig.totalMatches) {
+          throw new Error(`Kunne ikke lage ligakamper. Forventet ${leagueConfig.totalMatches}, fikk ${leagueMatches.length}.`);
+        }
 
         const leagueMatchesToInsert = leagueMatches.map((match) => ({
           tournament_id: tournament.id,

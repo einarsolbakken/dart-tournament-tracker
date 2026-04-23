@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -13,64 +13,8 @@ import { TournamentFormatStep } from "./steps/TournamentFormatStep";
 import { GameRulesStep } from "./steps/GameRulesStep";
 import { PlayersStep } from "./steps/PlayersStep";
 import { cn } from "@/lib/utils";
-
-type TournamentFormat = "group" | "league";
-
-const STEPS = [
-  { number: 1, label: "Info" },
-  { number: 2, label: "Format" },
-  { number: 3, label: "Regler" },
-  { number: 4, label: "Spillere" },
-];
-
-export function CreateTournamentWizard() {
-  const navigate = useNavigate();
-  const createTournament = useCreateTournament();
-  
-  const [currentStep, setCurrentStep] = useState(1);
-  const [direction, setDirection] = useState<"left" | "right">("right");
-  
-  // Form state
-  const [name, setName] = useState("");
-  const [date, setDate] = useState<Date>(new Date());
-  const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
-  const [playerCountries, setPlayerCountries] = useState<string[]>(["", ""]);
-  const [isCreating, setIsCreating] = useState(false);
-  const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>("group");
-  const [matchesPerPlayer, setMatchesPerPlayer] = useState<number>(3);
-  
-  // Game rules state
-  const [gameMode, setGameMode] = useState<string>("301");
-  const [groupSetsToWin, setGroupSetsToWin] = useState<number>(2);
-  const [knockoutSetsToWin, setKnockoutSetsToWin] = useState<number>(3);
-  const [groupCheckoutType, setGroupCheckoutType] = useState<string>("single");
-  const [knockoutCheckoutType, setKnockoutCheckoutType] = useState<string>("double");
-  const [showCheckoutSuggestions, setShowCheckoutSuggestions] = useState<boolean>(false);
-
-  const addPlayer = () => {
-    setPlayerNames([...playerNames, ""]);
-    setPlayerCountries([...playerCountries, ""]);
-  };
-
-  const removePlayer = (index: number) => {
-    if (playerNames.length > 2) {
-      setPlayerNames(playerNames.filter((_, i) => i !== index));
-      setPlayerCountries(playerCountries.filter((_, i) => i !== index));
-    }
-  };
-
-  const updatePlayerName = (index: number, value: string) => {
-    const updated = [...playerNames];
-    updated[index] = value;
-    setPlayerNames(updated);
-  };
-
-  const updatePlayerCountry = (index: number, value: string) => {
-    const updated = [...playerCountries];
-    updated[index] = value;
-    setPlayerCountries(updated);
-  };
-
+import { getValidMatchesPerPlayerOptions, validateLeagueConfig } from "@/lib/leagueGenerator";
+...
   const validPlayerCount = playerNames.filter((n) => n.trim()).length;
   
   // Check for duplicate names
@@ -92,6 +36,17 @@ export function CreateTournamentWizard() {
   
   const duplicateNames = getDuplicateNames();
   const hasDuplicates = duplicateNames.size > 0;
+  const validLeagueOptions = getValidMatchesPerPlayerOptions(validPlayerCount);
+  const leagueConfig = validateLeagueConfig(validPlayerCount, matchesPerPlayer);
+  const isLeagueConfigValid = tournamentFormat !== "league" || leagueConfig.isValid;
+
+  useEffect(() => {
+    if (tournamentFormat !== "league") return;
+    if (validLeagueOptions.length === 0) return;
+    if (!validLeagueOptions.includes(matchesPerPlayer)) {
+      setMatchesPerPlayer(validLeagueOptions[0]);
+    }
+  }, [tournamentFormat, validPlayerCount, matchesPerPlayer, validLeagueOptions]);
 
   const canGoNext = () => {
     switch (currentStep) {
@@ -101,35 +56,15 @@ export function CreateTournamentWizard() {
         return true;
       case 3:
         return true;
-      case 4:
+      case 4: {
         const minPlayers = tournamentFormat === "group" ? 3 : 2;
-        return validPlayerCount >= minPlayers && !hasDuplicates;
+        return validPlayerCount >= minPlayers && !hasDuplicates && isLeagueConfigValid;
+      }
       default:
         return false;
     }
   };
-
-  const goNext = () => {
-    if (currentStep < 4 && canGoNext()) {
-      setDirection("right");
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const goBack = () => {
-    if (currentStep > 1) {
-      setDirection("left");
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const goToStep = (step: number) => {
-    if (step < currentStep) {
-      setDirection("left");
-      setCurrentStep(step);
-    }
-  };
-
+...
   const handleSubmit = async () => {
     const validPlayers = playerNames.filter((n) => n.trim());
     
@@ -145,6 +80,11 @@ export function CreateTournamentWizard() {
     
     if (tournamentFormat === "league" && validPlayers.length < 2) {
       toast.error("Du trenger minst 2 spillere for ligasystem");
+      return;
+    }
+
+    if (tournamentFormat === "league" && !leagueConfig.isValid) {
+      toast.error(leagueConfig.errorMessage || "Ugyldig ligaoppsett");
       return;
     }
 
@@ -173,7 +113,7 @@ export function CreateTournamentWizard() {
       toast.success("Turnering opprettet!");
       navigate(`/tournament/${tournament.id}`);
     } catch (error) {
-      toast.error("Kunne ikke opprette turnering");
+      toast.error(error instanceof Error ? error.message : "Kunne ikke opprette turnering");
       setIsCreating(false);
     }
   };
